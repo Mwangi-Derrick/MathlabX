@@ -245,286 +245,321 @@ public:
     std::vector<Point2D> getCurrentPoints() const { return pointsCurrent; }
 };
 
-class VectorFieldEngine : public WaveEngine {
-private:
-    std::vector<Point3D> fieldPoints;
+// ─── Shared Data Structures ───────────────────────────────────────────────────
+
+struct GridPoint2D {
+    double x, y;
+    double fx, fy;
+    double divergence;
+    double curl_z;
+};
+
+struct GridPoint3D {
+    double x, y, z;
+    double fx, fy, fz;
+    double divergence;
+    double curl_x, curl_y, curl_z;
+};
+
+/* this is a vector mathematics namespace
+it is used for atomic math operations on individual points
+*/
+namespace VectorMath {
+    inline double divergence2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
+                               const GridPoint2D& prevY, const GridPoint2D& nextY,
+                               double dx, double dy) {
+        double dFx_dx = (nextX.fx - prevX.fx) / (2.0 * dx);
+        double dFy_dy = (nextY.fy - prevY.fy) / (2.0 * dy);
+        return dFx_dx + dFy_dy;
+    }
+
+    inline double curl2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
+                         const GridPoint2D& prevY, const GridPoint2D& nextY,
+                         double dx, double dy) {
+        double dFy_dx = (nextX.fy - prevX.fy) / (2.0 * dx);
+        double dFx_dy = (nextY.fx - prevY.fx) / (2.0 * dy);
+        return dFy_dx - dFx_dy;
+    }
+
+    inline double divergence3D(const GridPoint3D& pX, const GridPoint3D& nX,
+                               const GridPoint3D& pY, const GridPoint3D& nY,
+                               const GridPoint3D& pZ, const GridPoint3D& nZ,
+                               double dx, double dy, double dz) {
+        return (nX.fx - pX.fx) / (2.0 * dx) +
+               (nY.fy - pY.fy) / (2.0 * dy) +
+               (nZ.fz - pZ.fz) / (2.0 * dz);
+    }
+}
+
+// ─── Base Class ───────────────────────────────────────────────────────────────
+
+class SpatialFieldEngine {
+protected:
+    int resX, resY, resZ;
+    double xMin, xMax;
+    double yMin, yMax;
+    double zMin, zMax;
+    double dx, dy, dz;
+
 public:
-    //the = in the params are the default values for the time domain and number of samples, which can be overridden when creating an instance of VectorFieldEngine
-    VectorFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
-        : WaveEngine(start, end, numSamples) {}
+    SpatialFieldEngine(
+        int rx = 20, int ry = 20, int rz = 20,
+        double xmin = -5.0, double xmax = 5.0,
+        double ymin = -5.0, double ymax = 5.0,
+        double zmin = -5.0, double zmax = 5.0
+    ) : resX(rx), resY(ry), resZ(rz),
+        xMin(xmin), xMax(xmax), yMin(ymin), yMax(ymax), zMin(zmin), zMax(zmax)
+    {
+        recomputeSteps();
+    }
+    virtual ~SpatialFieldEngine() = default;
 
-        void generateField(int _x_freq = 2, int _y_freq = 2, int _z_freq = 4,
-        int _amp_x = 1, int _amp_y = 1, int _amp_z = 1) {
-            fieldPoints.clear();
-            if (samples < 2) return;
-            struct Amplitude {
-                double x;
-                double y;
-                double z;
-            };
-            struct Frequency {
-                double x;
-                double y;
-                double z;
-            };
-            double step = (domainEnd - domainStart) / (samples - 1);
-            //.reserve() is used to pre-allocate memory for the vector, which can improve performance by reducing the number of reallocations needed as we push back new points.
-            fieldPoints.reserve(samples);
-            Frequency freq = {_x_freq, _y_freq, _z_freq};
-            Amplitude amp = {_amp_x, _amp_y, _amp_z};
-            for (int i = 0; i < samples; ++i) {
-                double t = domainStart + i * step; // time in seconds
-                
-                // Example: A simple rotating vector field
-                double x = amp.x * std::cos(freq.x * M_PI * t);
-                double y = amp.y * std::sin(freq.y * M_PI * t);
-                double z = amp.z * 0.0;
+    void setResolution(int rx, int ry, int rz = 1) {
+        resX = std::max(2, std::min(rx, 100));
+        resY = std::max(2, std::min(ry, 100));
+        resZ = std::max(2, std::min(rz, 100));
+        recomputeSteps();
+    }
 
-                // Field vector could represent something like an electric field
-                double vx = -amp.x * std::sin(freq.x * M_PI * t); // derivative of x
-                double vy = amp.y * std::cos(freq.y * M_PI * t);  // derivative of y
-                double vz = 0.0;
+    void setBounds(double xmin, double xmax, double ymin, double ymax,
+                   double zmin = -5.0, double zmax = 5.0) {
+        xMin = xmin; xMax = xmax;
+        yMin = ymin; yMax = ymax;
+        zMin = zmin; zMax = zmax;
+        recomputeSteps();
+    }
+private:
+    void recomputeSteps() {
+        dx = (xMax - xMin) / (resX - 1);
+        dy = (yMax - yMin) / (resY - 1);
+        dz = (resZ > 1) ? (zMax - zMin) / (resZ - 1) : 1.0;
+    }
+};
 
-                fieldPoints.push_back({x, y, z, vx, vy, vz});
+// ─── 2D Engines ───────────────────────────────────────────────────────────────
+
+class SpatialFieldEngine2D : public SpatialFieldEngine {
+protected:
+    std::vector<GridPoint2D> grid;
+    double ampX, ampY, freqX, freqY;
+    std::string preset;
+
+public:
+    SpatialFieldEngine2D(
+        int rx = 20, int ry = 20,
+        double xmin = -5.0, double xmax = 5.0,
+        double ymin = -5.0, double ymax = 5.0
+    ) : SpatialFieldEngine(rx, ry, 1, xmin, xmax, ymin, ymax),
+        ampX(1.0), ampY(1.0), freqX(1.0), freqY(1.0), preset("rotation") {}
+
+    void setPreset(const std::string& name) { preset = name; }
+    void setCustomParams(double ax, double ay, double fx, double fy) {
+        ampX = ax; ampY = ay; freqX = fx; freqY = fy; preset = "custom";
+    }
+
+    void evaluateField(double x, double y, double& fx, double& fy) const {
+        if (preset == "rotation") { fx = -y; fy = x; }
+        else if (preset == "source") { fx = x; fy = y; }
+        else if (preset == "sink") { fx = -x; fy = -y; }
+        else if (preset == "saddle") { fx = x; fy = -y; }
+        else {
+            fx = ampX * std::cos(freqX * y);
+            fy = ampY * std::sin(freqY * x);
+        }
+    }
+
+    void generateGrid() {
+        grid.clear();
+        grid.resize(resX * resY);
+        #pragma omp parallel for
+        for (int iy = 0; iy < resY; ++iy) {
+            for (int ix = 0; ix < resX; ++ix) {
+                double x = xMin + ix * dx;
+                double y = yMin + iy * dy;
+                double fx, fy;
+                evaluateField(x, y, fx, fy);
+                grid[iy * resX + ix] = { x, y, fx, fy, 0.0, 0.0 };
             }
         }
+    }
 
-    std::vector<Point3D> getFieldPoints() const { return fieldPoints; }
+    std::vector<GridPoint2D> getGrid() const { return grid; }
+    int getResX() const { return resX; }
+    int getResY() const { return resY; }
 };
 
-
-class VectorFieldEngine2D : public WaveEngine {
-private:
-    std::vector<Point2D> fieldPoints;
+class DivergenceEngine2D : public SpatialFieldEngine2D {
 public:
-    VectorFieldEngine2D(double start = 0.0, double end = 0.05, int numSamples = 800) 
-        : WaveEngine(start, end, numSamples) {}
-        struct Amplitude {
-        double x;
-        double y;
-    };
-    struct Frequency {
-        double x;
-        double y;
-    };
-        void generateField(Frequency freq = {2, 2}, Amplitude amp = {1, 1}) {
-            fieldPoints.clear();
-            if (samples < 2) return;
+    DivergenceEngine2D(int rx = 20, int ry = 20, double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0) 
+        : SpatialFieldEngine2D(rx, ry, xmin, xmax, ymin, ymax) {}
 
-            double step = (domainEnd - domainStart) / (samples - 1);
-            fieldPoints.reserve(samples);
-                //we can have a variable that allows us to modify(2,2) the frequencies of the x and y components to create different patterns in the field. For example, we could have a slider in the UI that allows the user to adjust these frequencies in real-time, creating an interactive visualization of the vector field.
-                int x_freq = freq.x;
-                int y_freq = freq.y;
-                int amp_x = amp.x;
-                int amp_y = amp.y; // we can also have amplitude variables to control the
-            for (int i = 0; i < samples; ++i) {
-                double t = domainStart + i * step; // time in seconds
-                
-                // Example: A simple oscillating vector field
-                double x = amp.x * std::cos(freq.x * M_PI * t);
-                double y = amp.y * std::sin(freq.y * M_PI * t);
-                // In a 2D field, we might just store the position (x, y) and infer the vector from the change in position over time.
-                //.push_back() is used to add a new Point2D to the fieldPoints vector, which represents the position of the field at time t.
-                //.push_back is a method of Vector that adds a new element to the end of the vector. In this case, we are adding a Point2D struct that contains the x and y coordinates of the field at time t.
-                fieldPoints.push_back({x, y});
+    void computeDivergence() {
+        for (int iy = 1; iy < resY - 1; ++iy) {
+            for (int ix = 1; ix < resX - 1; ++ix) {
+                int idx = iy * resX + ix;
+                grid[idx].divergence = VectorMath::divergence2D(
+                    grid[iy*resX + (ix-1)], grid[iy*resX + (ix+1)],
+                    grid[(iy-1)*resX + ix], grid[(iy+1)*resX + ix], dx, dy
+                );
             }
         }
-    std::vector<Point2D> getFieldPoints() const { return fieldPoints; }
+    }
+
+    void compute() {
+        generateGrid();
+        computeDivergence();
+    }
 };
 
-//ideas on how to make complex vector fields: and multivartiate fields:
-//1. Superposition of multiple simple fields: Combine several basic fields (e.g., rotating
-//   vectors, oscillating vectors) to create more complex patterns. For example, you could add a rotating field to an oscillating field to create a swirling effect.
-//2. Time-varying parameters: Allow the parameters of the field (e.g., amplitude, frequency) to change over time, creating dynamic and evolving field patterns.
-//3. Non-linear
-//   transformations: Apply non-linear transformations to the field points, such as using sine or cosine functions of the coordinates to create more intricate patterns.
-//what about doing multivaratae calculus? 
-//4. Multivariate fields: Instead of just storing the position of the field, you could also store the vector components (vx, vy) at each point, allowing you to represent the direction and magnitude of the field at each location. This would enable you to create vector fields that represent things like fluid flow or electromagnetic fields.
-
-//we can also plot 3d 4d shapes and perform complex calculus given a funstion(x,y,z) and its partial derivatives, we can plot the function and its gradient field, or even compute line integrals and surface integrals over the field. This would allow us to visualize and analyze complex multivariate functions in a way that is not possible with simple 2D plots.
-
-class MultivariateFieldEngine : public WaveEngine {
-private:
-    std::vector<Point3D> fieldPoints;
+class CurlEngine2D : public SpatialFieldEngine2D {
 public:
-    MultivariateFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
-        : WaveEngine(start, end, numSamples) {}
-    // we will refactor to store the vector components in the Point3D struct, allowing us to represent the direction and magnitude of the field at each location. This would enable us to create vector fields that represent things like fluid flow or electromagnetic fields, and we can also plot 3d 4d shapes and perform complex calculus given a funstion(x,y,z) and its partial derivatives, we can plot the function and its gradient field, or even compute line integrals and surface integrals over the field. This would allow us to visualize and analyze complex multivariate functions in a way that is not possible with simple 2D plots.
-    struct Amplitude {
-        double x;
-        double y;
-        double z;
-    };
-    struct Frequency {
-        double x;
-        double y;
-        double z;
-    };
-    void generateField(Frequency freq = {2, 2, 4}, Amplitude amp = {1, 1, 1}) {
-        fieldPoints.clear();
-        if (samples < 2) return;
-        double step = (domainEnd - domainStart) / (samples - 1);
-        fieldPoints.reserve(samples);
-         //we can have a variable that allows us to modify(2,2,4) the frequencies of the x,y,z components to create different patterns in the field. For example, we could have a slider in the UI that allows the user to adjust these frequencies in real-time, creating an interactive visualization of the multivariate field.
-// we can also have amplitude variables to control the strength of each component of the field, allowing for even more customization and complexity in the patterns we can create. 
-        for (int i = 0; i < samples; ++i) {
-            double t = domainStart + i * step; // time in seconds
-            
-            // Example: A simple multivariate field based on a function of x, y, z
-            // we can define a function f(x, y, z) = cos(2πt) + sin(2πt) + cos(4πt) and then compute the field points based on this function. The x, y, z coordinates could represent the position of the field at time t, while the vx, vy, vz components could represent the vector field derived from the function's gradient or some other rule.
-            // cos is x factor and sin is y factor, and the z factor is a higher frequency cosine to add some complexity to the field. The vector components (vx, vy, vz) are derived from the derivatives of the function with respect to time, which gives us a sense of how the field is changing at each point in time.
+    CurlEngine2D(int rx = 20, int ry = 20, double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0) 
+        : SpatialFieldEngine2D(rx, ry, xmin, xmax, ymin, ymax) {}
 
-            double x = amp.x * std::cos(freq.x * M_PI * t);
-            double y = amp.y * std::sin(freq.y * M_PI * t);
-            double z = amp.z * std::cos(freq.z * M_PI * t);
-
-            // The vector components could be derived from the function's gradient or some other rule
-            double vx = -freq.x * M_PI * std::sin(freq.x * M_PI * t); // derivative of x
-            double vy = freq.y * M_PI * std::cos(freq.y * M_PI * t);  // derivative of y
-            double vz = -freq.z * M_PI * std::sin(freq.z * M_PI * t); // derivative of z
-
-            fieldPoints.push_back({x, y, z, vx, vy, vz});
+    void computeCurl() {
+        for (int iy = 1; iy < resY - 1; ++iy) {
+            for (int ix = 1; ix < resX - 1; ++ix) {
+                int idx = iy * resX + ix;
+                grid[idx].curl_z = VectorMath::curl2D(
+                    grid[iy*resX + (ix-1)], grid[iy*resX + (ix+1)],
+                    grid[(iy-1)*resX + ix], grid[(iy+1)*resX + ix], dx, dy
+                );
+            }
         }
     }
-    std::vector<Point3D> getFieldPoints() const { return fieldPoints; }
-};
 
-class DotProductFieldEngine : public MultivariateFieldEngine {
-    // In a dot product field, we can compute the dot product of the vector components at each point with a fixed vector to create a scalar field that represents the projection of the field onto that vector. This can be useful for visualizing how much of the field is aligned with a particular direction. For example, if we have a fixed vector (1, 0, 0), the dot product would give us the component of the field in the x-direction at each point.
-    //dot product is computed as: dot = vx * fixedVector.vx + vy * fixedVector.vy + vz * fixedVector.vz, where (vx, vy, vz) are the vector components of the field at a given point and (fixedVector.vx, fixedVector.vy, fixedVector.vz) are the components of the fixed vector we are projecting onto. The resulting dot product value can be positive, negative, or zero, indicating whether the field is aligned with, opposed to, or orthogonal to the fixed vector at that point.
-    //it is used to calculate the divergence of a vector field, which is a measure of how much the field is spreading out or converging at a given point. The divergence can be computed as the dot product of the field's vector components with the fixed vector representing the direction of interest. This allows us to visualize areas where the field is diverging (positive divergence) or converging (negative divergence) in relation to that direction.
-public: DotProductFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
-        : MultivariateFieldEngine(start, end, numSamples) {}
-    std::vector<double> computeDotProduct(const Point3D& fixedVector) const {
-        std::vector<double> dotProducts;
-        //get field points is inherited from MultivariateFieldEngine, which generates the field points with their vector components (vx, vy, vz). We then compute the dot product of these vector components with the fixed vector for each point in the field and store the results in a new vector called dotProducts. This allows us to analyze how much of the field is aligned with the fixed vector across the entire field.
-        dotProducts.reserve(getFieldPoints().size());
-        for (const auto& point : getFieldPoints()) {
-            double dot = point.vx * fixedVector.vx + point.vy * fixedVector.vy + point.vz * fixedVector.vz;
-            dotProducts.push_back(dot);
-        }
-        return dotProducts;
+    void compute() {
+        generateGrid();
+        computeCurl();
     }
 };
 
+// 3D Engines
+//this 3d engine plots 3d vector fields
+class SpatialFieldEngine3D : public SpatialFieldEngine {
+protected:
+    std::vector<GridPoint3D> grid;
+    double ampX, ampY, ampZ, freqX, freqY, freqZ;
+    std::string preset;
 
-class CrossProductFieldEngine : public MultivariateFieldEngine {
-    // In a cross product field, we can compute the cross product of the vector components at each point with a fixed vector to create a new vector field that is perpendicular to both the original field and the fixed vector. This can be useful for visualizing rotational aspects of the field or for creating a new field that represents the curl of the original field in relation to the fixed vector. The cross product is computed as: 
-    // cross.x = vy * fixedVector.vz - vz * fixedVector.vy
-    // cross.y = vz * fixedVector.vx - vx * fixedVector.vz
-    // cross.z = vx * fixedVector.vy - vy * fixedVector.vx
-    // The resulting cross product vector at each point will be perpendicular to both the original field vector
-  
-public: CrossProductFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
-        : MultivariateFieldEngine(start, end, numSamples) {}
-    std::vector<Point3D> computeCrossProduct(const Point3D& fixedVector) const {
-        std::vector<Point3D> crossProducts;
-        crossProducts.reserve(getFieldPoints().size());
-        for (const auto& point : getFieldPoints()) {
-            double crossX = point.vy * fixedVector.vz - point.vz * fixedVector.vy;
-            double crossY = point.vz * fixedVector.vx - point.vx * fixedVector.vz;
-            double crossZ = point.vx * fixedVector.vy - point.vy * fixedVector.vx;
-            crossProducts.push_back({crossX, crossY, crossZ, 0, 0, 0}); // We can ignore the vector
-        }
-        return crossProducts;
-    }
-};
-// we have dot and cross product engine so how can we do divergence and curl?
-//should they be done internally in thos classes or should we have separate classes for divergence and curl that take the field points and compute these values based on the vector components?
-/*we can have separate classes for divergence and curl that take the field points and compute these values based on the vector components. This would allow us to keep the field generation logic separate from the analysis logic, making the code more modular and easier to maintain. 
-The DivergenceFieldEngine could compute the divergence at each point by taking the dot product of the field's vector components with a fixed vector representing the direction of interest, while the CurlFieldEngine could compute the curl by taking the cross product of the field's vector components with a fixed vector.
- This separation of concerns would allow us to easily add new types of analysis in the future without modifying the core field generation logic.
-*/
-
-/*the divergence and curl classes can inherit the dot and cross product clasess?
-Yes, the DivergenceFieldEngine could inherit from the DotProductFieldEngine, and the CurlFieldEngine could inherit from the CrossProductFieldEngine. 
-This way, they can reuse the existing logic for computing dot and cross products while adding their specific computations for divergence and curl. For example, the DivergenceFieldEngine could have a method that computes the divergence by taking the dot product of the field's vector components with a fixed vector, while the CurlFieldEngine could have a method that computes the curl by taking the cross product of the field's vector components with a fixed vector. 
-This inheritance structure would allow us to keep our code organized and promote code reuse while still allowing for specialized functionality in each engine.
-*/
-
-class DivergenceFieldEngine : public DotProductFieldEngine {
 public:
-    std::vector<double> computeDivergence() const {
-        // Finite difference approximation
-        std::vector<double> divergence;
-        auto points = getFieldPoints();
-        
-        for (size_t i = 1; i < points.size() - 1; ++i) {
-            /*remeber the computer is doing too many samples, 
-            so we can use finite difference approximation to compute the divergence at each point based on the vector components of the field. The divergence can be approximated as the sum of the partial derivatives of the vector components with respect to their respective coordinates. 
-            For example, if we have a vector field with components (vx, vy, vz), the divergence can be approximated as:
-            divergence ≈ (dVx/dx) + (dVy/dy) + (dVz/dz)
-            where dVx/dx, dVy/dy, and dVz/dz can be approximated using finite differences as:
-            dVx/dx ≈ (Vx[i+1].vx - Vx[i-1].vx) / (x[i+1] - x[i-1])
-            dVy/dy ≈ (Vy[i+1].vy - Vy[i-1].vy) / (y[i+1] - y[i-1])
-            dVz/dz ≈ (Vz[i+1].vz - Vz[i-1].vz) / (z[i+1] - z[i-1])
-            This approach allows us to compute the divergence at each point in the field based on the changes in
-            the vector components across neighboring points, giving us insight into how the field is spreading out or converging at each location.
-            */
-            double dx = points[i+1].x - points[i-1].x;
-            double dy = points[i+1].y - points[i-1].y;
-            double dz = points[i+1].z - points[i-1].z;
-            
-            double dVx_dx = (points[i+1].vx - points[i-1].vx) / dx;
-            double dVy_dy = (points[i+1].vy - points[i-1].vy) / dy;
-            double dVz_dz = (points[i+1].vz - points[i-1].vz) / dz;
-            
-            divergence.push_back(dVx_dx + dVy_dy + dVz_dz);
-        }
-        return divergence;
-    }
-};
-//wait why not use the values retruned by the crossproductengine to compute the curl?
-//we could compute the curl by taking the cross product of the field's vector components with a fixed vector, and then we can use the values returned by the CrossProductFieldEngine to compute the curl. The curl can be approximated as:
-//curl ≈ (dVz/dy - dVy/dz, dVx/dz - dVz/dx, dVy/dx - dVx/dy)
-//where dVz/dy, dVy/dz, dVx/dz, dVz/dx, dVy/dx, and dVx/dy can be approximated using finite differences as:
-//dVz/dy ≈ (Vz[i+1].vz - Vz[i-1].vz) / (y[i+1] - y[i-1])
-//dVy/dz ≈ (Vy[i+1].vy - Vy[i-1].vy  ) / (z[i+1] - z[i-1])
-//dVx/dz ≈ (Vx[i+1].vx - Vx[i-1].vx) / (z[i+1] - z[i-1])
-//dVz/dx ≈ (Vz[i+1].vz - Vz[i-1].vz) / (x[i+1] - x[i-1])
-//dVy/dx ≈ (Vy[i+1].vy - Vy[i-1].vy) / (x[i+1] - x[i-1])
-//dVx/dy ≈ (Vx[i+1].vx - Vx[i-1].vx) / (y[i+1] - y[i-1])
-//we will reuse the end value the crossproduct engine to compute the curl, which will give us a new vector field that represents the rotational aspects of the original field in relation to the fixed vector. This allows us to visualize how the field is swirling or rotating around the fixed vector, providing insight into the dynamics of the field in a way that is not possible with just the original vector components alone.
-class CurlFieldEngine : public CrossProductFieldEngine {
-public:  std::vector<Point3D> computeCurl() const {
-        // Finite difference approximation
-        std::vector<Point3D> curl;
-        auto points = getFieldPoints();
-        for (size_t i = 1; i < points.size() - 1; ++i) {
-            //this is wrong, we need to compute the curl based on the vector components of the field, which involves taking the cross product of the field's vector components with a fixed vector. The curl can be approximated as:
-            //curl ≈ (dVz/dy - dVy/dz, dVx/dz - dVz/dx, dVy/dx - dVx/dy)
-            //where dVz/dy, dVy/dz, dVx/dz, dVz/dx, dVy/dx, and dVx/dy can be approximated 
-            //using finite differences as:
-            //dVz/dy ≈ (Vz[i+1].vz - Vz[i-1].vz) / (y[i+1] - y[i-1])
-            //dVy/dz ≈ (Vy[i+1].vy - Vy[i-1].vy  ) / (z[i+1] - z[i-1])
-            //dVx/dz ≈ (Vx[i+1].vx - Vx[i-1].vx) / (z[i+1] - z[i-1])
-            //dVz/dx ≈ (Vz[i+1].vz - Vz[i-1].vz) / (x[i+1] - x[i-1])
-            //dVy/dx ≈ (Vy[i+1].vy - Vy[i-1].vy) / (x[i+1] - x[i-1])
-            //dVx/dy ≈ (Vx[i+1].vx - Vx[i-1].vx) / (y[i+1] - y[i-1])
+    SpatialFieldEngine3D(
+        int rx = 10, int ry = 10, int rz = 10,
+        double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0, double zmin = -5.0, double zmax = 5.0
+    ) : SpatialFieldEngine(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax),
+        ampX(1.0), ampY(1.0), ampZ(1.0), freqX(1.0), freqY(1.0), freqZ(1.0), preset("rotation") {}
 
-            double dx = points[i+1].x - points[i-1].x;
-            double dy = points[i+1].y - points[i-1].y;
-            double dz = points[i+1].z - points[i-1].z;
-            
-            double dVy_dz = (points[i+1].vy - points[i-1].vy) / dz;
-            double dVz_dy = (points[i+1].vz - points[i-1].vz) / dy;
-            double dVz_dx = (points[i+1].vz - points[i-1].vz) / dx;
-            double dVx_dz = (points[i+1].vx - points[i-1].vx) / dz;
-            double dVx_dy = (points[i+1].vx - points[i-1].vx) / dy;
-            double dVy_dx = (points[i+1].vy - points[i-1].vy) / dx;
-            
-            curl.push_back({
-                dVz_dy - dVy_dz, // curl.x
-                dVx_dz - dVz_dx, // curl.y
-                dVy_dx - dVx_dy, // curl.z
-                0, 0, 0 // We can ignore the vector components for the curl result
-            });
+    void setPreset(const std::string& name) { preset = name; }
+    void setCustomParams(double ax, double ay, double az, double fx, double fy, double fz) {
+        ampX = ax; ampY = ay; ampZ = az; freqX = fx; freqY = fy; freqZ = fz; preset = "custom";
+    }
+
+    void evaluateField3D(double x, double y, double z, double& fx, double& fy, double& fz) const {
+        if (preset == "rotation") { fx = -y; fy = x; fz = 0.0; }
+        else if (preset == "source") { fx = x; fy = y; fz = z; }
+        else if (preset == "sink") { fx = -x; fy = -y; fz = -z; }
+        else if (preset == "helical") { fx = -y; fy = x; fz = 1.0; }
+        else {
+            fx = ampX * std::cos(freqX * y);
+            fy = ampY * std::sin(freqY * x);
+            fz = ampZ * std::cos(freqZ * z);
         }
-        return curl;
+    }
+
+    void generateGrid() {
+        grid.clear();
+        grid.resize(resX * resY * resZ);
+        //this is a 3d grid of points
+        //3 by 1 matrix
+        for (int iz = 0; iz < resZ; ++iz) {
+            for (int iy = 0; iy < resY; ++iy) {
+                for (int ix = 0; ix < resX; ++ix) {
+                    double x = xMin + ix * dx;
+                    double y = yMin + iy * dy;
+                    double z = zMin + iz * dz;
+                    double fx, fy, fz;
+                    evaluateField3D(x, y, z, fx, fy, fz);
+                    int idx = iz * resX * resY + iy * resX + ix;
+                    grid[idx] = { x, y, z, fx, fy, fz, 0.0, 0.0, 0.0, 0.0 };
+                }
+            }
+        }
+    }
+
+    std::vector<GridPoint3D> getGrid() const { return grid; }
+    int getResX() const { return resX; }
+    int getResY() const { return resY; }
+    int getResZ() const { return resZ; }
+};
+
+class DivergenceEngine3D : public SpatialFieldEngine3D {
+public:
+    DivergenceEngine3D(int rx = 10, int ry = 10, int rz = 10, double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0, double zmin = -5.0, double zmax = 5.0) 
+        : SpatialFieldEngine3D(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax) {}
+
+    void computeDivergence() {
+        for (int iz = 1; iz < resZ - 1; ++iz) {
+            for (int iy = 1; iy < resY - 1; ++iy) {
+                for (int ix = 1; ix < resX - 1; ++ix) {
+                    int idx = iz * resX * resY + iy * resX + ix;
+                    auto& pX = grid[iz*resX*resY + iy*resX + (ix-1)];
+                    auto& nX = grid[iz*resX*resY + iy*resX + (ix+1)];
+                    auto& pY = grid[iz*resX*resY + (iy-1)*resX + ix];
+                    auto& nY = grid[iz*resX*resY + (iy+1)*resX + ix];
+                    auto& pZ = grid[(iz-1)*resX*resY + iy*resX + ix];
+                    auto& nZ = grid[(iz+1)*resX*resY + iy*resX + ix];
+                    
+                    grid[idx].divergence = VectorMath::divergence3D(pX, nX, pY, nY, pZ, nZ, dx, dy, dz);
+                }
+            }
+        }
+    }
+
+    void compute() {
+        generateGrid();
+        computeDivergence();
     }
 };
-// ─── Emscripten Bindings ───
+
+class CurlEngine3D : public SpatialFieldEngine3D {
+public:
+    CurlEngine3D(int rx = 10, int ry = 10, int rz = 10, double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0, double zmin = -5.0, double zmax = 5.0) 
+        : SpatialFieldEngine3D(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax) {}
+
+    void computeCurl() {
+        for (int iz = 1; iz < resZ - 1; ++iz) {
+            for (int iy = 1; iy < resY - 1; ++iy) {
+                for (int ix = 1; ix < resX - 1; ++ix) {
+                    int idx = iz * resX * resY + iy * resX + ix;
+                    auto G = [&](int iix, int iiy, int iiz) -> const GridPoint3D& {
+                        return grid[iiz * resX * resY + iiy * resX + iix];
+                    };
+
+                    double dFz_dy = (G(ix,iy+1,iz).fz - G(ix,iy-1,iz).fz) / (2.0 * dy);
+                    double dFy_dz = (G(ix,iy,iz+1).fy - G(ix,iy,iz-1).fy) / (2.0 * dz);
+                    
+                    double dFx_dz = (G(ix,iy,iz+1).fx - G(ix,iy,iz-1).fx) / (2.0 * dz);
+                    double dFz_dx = (G(ix+1,iy,iz).fz - G(ix-1,iy,iz).fz) / (2.0 * dx);
+                    
+                    double dFy_dx = (G(ix+1,iy,iz).fy - G(ix-1,iy,iz).fy) / (2.0 * dx);
+                    double dFx_dy = (G(ix,iy+1,iz).fx - G(ix,iy-1,iz).fx) / (2.0 * dy);
+
+                    grid[idx].curl_x = dFz_dy - dFy_dz;
+                    grid[idx].curl_y = dFx_dz - dFz_dx;
+                    grid[idx].curl_z = dFy_dx - dFx_dy;
+                }
+            }
+        }
+    }
+
+    void compute() {
+        generateGrid();
+        computeCurl();
+    }
+};
+
+// ─── Emscripten Bindings ──────────────────────────────────────────────────────
+
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
         .field("x", &Point2D::x)
@@ -532,13 +567,11 @@ EMSCRIPTEN_BINDINGS(wave_module) {
 
     emscripten::register_vector<Point2D>("Point2DVector");
 
-    // Base Class binding
     emscripten::class_<WaveEngine>("WaveEngine")
         .function("setSamples", &WaveEngine::setSamples)
         .function("getSamples", &WaveEngine::getSamples);
 
-    // Child Class binding — Demonstrates C++ Inheritance to JS!
-    emscripten::class_<ACCircuitEngine, base<WaveEngine>>("ACCircuitEngine")
+    emscripten::class_<ACCircuitEngine, emscripten::base<WaveEngine>>("ACCircuitEngine")
         .constructor<double, double, int>()
         .function("setCircuitParameters", &ACCircuitEngine::setCircuitParameters)
         .function("setSource", &ACCircuitEngine::setSource)
@@ -555,4 +588,73 @@ EMSCRIPTEN_BINDINGS(wave_module) {
         .function("generateWaves", &ACCircuitEngine::generateWaves)
         .function("getVoltagePoints", &ACCircuitEngine::getVoltagePoints)
         .function("getCurrentPoints", &ACCircuitEngine::getCurrentPoints);
+
+    // ── Spatial Structs ──
+    emscripten::value_object<GridPoint2D>("GridPoint2D")
+        .field("x",          &GridPoint2D::x)
+        .field("y",          &GridPoint2D::y)
+        .field("fx",         &GridPoint2D::fx)
+        .field("fy",         &GridPoint2D::fy)
+        .field("divergence", &GridPoint2D::divergence)
+        .field("curl_z",     &GridPoint2D::curl_z);
+
+    emscripten::value_object<GridPoint3D>("GridPoint3D")
+        .field("x",          &GridPoint3D::x)
+        .field("y",          &GridPoint3D::y)
+        .field("z",          &GridPoint3D::z)
+        .field("fx",         &GridPoint3D::fx)
+        .field("fy",         &GridPoint3D::fy)
+        .field("fz",         &GridPoint3D::fz)
+        .field("divergence", &GridPoint3D::divergence)
+        .field("curl_x",     &GridPoint3D::curl_x)
+        .field("curl_y",     &GridPoint3D::curl_y)
+        .field("curl_z",     &GridPoint3D::curl_z);
+
+    emscripten::register_vector<GridPoint2D>("GridPoint2DVector");
+    emscripten::register_vector<GridPoint3D>("GridPoint3DVector");
+
+    // ── 2D Engines ──
+    emscripten::class_<SpatialFieldEngine2D>("SpatialFieldEngine2D")
+        .constructor<int, int, double, double, double, double>()
+        .function("setPreset",       &SpatialFieldEngine2D::setPreset)
+        .function("setCustomParams", &SpatialFieldEngine2D::setCustomParams)
+        .function("generateGrid",    &SpatialFieldEngine2D::generateGrid)
+        .function("getGrid",         &SpatialFieldEngine2D::getGrid)
+        .function("getResX",         &SpatialFieldEngine2D::getResX)
+        .function("getResY",         &SpatialFieldEngine2D::getResY)
+        .function("setResolution",   &SpatialFieldEngine2D::setResolution)
+        .function("setBounds",       &SpatialFieldEngine2D::setBounds);
+
+    emscripten::class_<DivergenceEngine2D, emscripten::base<SpatialFieldEngine2D>>("DivergenceEngine2D")
+        .constructor<int, int, double, double, double, double>()
+        .function("compute",            &DivergenceEngine2D::compute)
+        .function("computeDivergence",  &DivergenceEngine2D::computeDivergence);
+
+    emscripten::class_<CurlEngine2D, emscripten::base<SpatialFieldEngine2D>>("CurlEngine2D")
+        .constructor<int, int, double, double, double, double>()
+        .function("compute",      &CurlEngine2D::compute)
+        .function("computeCurl",  &CurlEngine2D::computeCurl);
+
+    // ── 3D Engines ──
+    emscripten::class_<SpatialFieldEngine3D>("SpatialFieldEngine3D")
+        .constructor<int, int, int, double, double, double, double, double, double>()
+        .function("setPreset",        &SpatialFieldEngine3D::setPreset)
+        .function("setCustomParams",  &SpatialFieldEngine3D::setCustomParams)
+        .function("generateGrid",     &SpatialFieldEngine3D::generateGrid)
+        .function("getGrid",          &SpatialFieldEngine3D::getGrid)
+        .function("getResX",          &SpatialFieldEngine3D::getResX)
+        .function("getResY",          &SpatialFieldEngine3D::getResY)
+        .function("getResZ",          &SpatialFieldEngine3D::getResZ)
+        .function("setResolution",    &SpatialFieldEngine3D::setResolution)
+        .function("setBounds",        &SpatialFieldEngine3D::setBounds);
+
+    emscripten::class_<DivergenceEngine3D, emscripten::base<SpatialFieldEngine3D>>("DivergenceEngine3D")
+        .constructor<int, int, int, double, double, double, double, double, double>()
+        .function("compute",           &DivergenceEngine3D::compute)
+        .function("computeDivergence", &DivergenceEngine3D::computeDivergence);
+
+    emscripten::class_<CurlEngine3D, emscripten::base<SpatialFieldEngine3D>>("CurlEngine3D")
+        .constructor<int, int, int, double, double, double, double, double, double>()
+        .function("compute",      &CurlEngine3D::compute)
+        .function("computeCurl",  &CurlEngine3D::computeCurl);
 }
