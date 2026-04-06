@@ -236,6 +236,35 @@ public:
     std::vector<Point3D> getFieldPoints() const { return fieldPoints; }
 };
 
+
+class VectorFieldEngine2D : public WaveEngine {
+private:
+    std::vector<Point2D> fieldPoints;
+public:
+    VectorFieldEngine2D(double start = 0.0, double end = 0.05, int numSamples = 800) 
+        : WaveEngine(start, end, numSamples) {}
+
+        void generateField() {
+            fieldPoints.clear();
+            if (samples < 2) return;
+
+            double step = (domainEnd - domainStart) / (samples - 1);
+            fieldPoints.reserve(samples);
+
+            for (int i = 0; i < samples; ++i) {
+                double t = domainStart + i * step; // time in seconds
+                
+                // Example: A simple oscillating vector field
+                double x = std::cos(2 * M_PI * t);
+                double y = std::sin(2 * M_PI * t);
+
+                fieldPoints.push_back({x, y});
+            }
+        }
+    std::vector<Point2D> getFieldPoints() const { return fieldPoints; }
+};
+
+
 // ─── Emscripten Bindings ───
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
