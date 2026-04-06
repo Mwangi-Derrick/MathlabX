@@ -1,6 +1,24 @@
 #ifndef SPATIAL_ENGINE_H
 #define SPATIAL_ENGINE_H
 
+
+// ─── Shared Data Structures ───────────────────────────────────────────────────
+
+struct GridPoint2D {
+    double x, y;
+    double fx, fy;
+    double divergence;
+    double curl_z;
+};
+
+struct GridPoint3D {
+    double x, y, z;
+    double fx, fy, fz;
+    double divergence;
+    double curl_x, curl_y, curl_z;
+};
+
+
 // ─── Base Class ───────────────────────────────────────────────────────────────
 
 class SpatialFieldEngine {
