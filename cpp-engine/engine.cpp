@@ -24,6 +24,28 @@
 
 using namespace emscripten;
 
+
+/**
+ * ARCHITECTURE NOTE:
+ * We can implement a dual-path execution strategy:
+ * 1. SIMD PATH: Utilizes 128-bit/256-bit registers to process multiple 'double' 
+ *    samples per clock cycle (Data-Level Parallelism).
+ * 2. SCALAR PATH: Standard OOP implementation for compatibility with older 
+ *    architectures and non-SIMD browsers.
+ * 
+ * DESIGN CHOICE: 
+ * We use 'double' (64-bit) for high-precision engineering requirements. 
+ * While 'float' and 'int' (32-bit) would allow 4x throughput in a 128-bit SIMD register, 
+ * 'double' provides the 2x throughput necessary for accurate Field Simulations 
+ * without sacrificing numerical stability.
+ * 
+ * CONCURRENCY:
+ * Task-Level Parallelism is handled via std::async to offload heavy 'FieldGeneration' 
+ * from the UI thread, ensuring the React frontend remains responsive during 
+ * high-sample computations.
+ */
+
+
 /**
  * A simple 2D point used to represent (time, value) pairs on the waveform.
  */
