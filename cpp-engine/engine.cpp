@@ -390,6 +390,25 @@ public:
     std::vector<Point3D> getFieldPoints() const { return fieldPoints; }
 };
 
+class DotProductFieldEngine : public MultivariateFieldEngine {
+    // In a dot product field, we can compute the dot product of the vector components at each point with a fixed vector to create a scalar field that represents the projection of the field onto that vector. This can be useful for visualizing how much of the field is aligned with a particular direction. For example, if we have a fixed vector (1, 0, 0), the dot product would give us the component of the field in the x-direction at each point.
+    //dot product is computed as: dot = vx * fixedVector.vx + vy * fixedVector.vy + vz * fixedVector.vz, where (vx, vy, vz) are the vector components of the field at a given point and (fixedVector.vx, fixedVector.vy, fixedVector.vz) are the components of the fixed vector we are projecting onto. The resulting dot product value can be positive, negative, or zero, indicating whether the field is aligned with, opposed to, or orthogonal to the fixed vector at that point.
+    //it is used to calculate the divergence of a vector field, which is a measure of how much the field is spreading out or converging at a given point. The divergence can be computed as the dot product of the field's vector components with the fixed vector representing the direction of interest. This allows us to visualize areas where the field is diverging (positive divergence) or converging (negative divergence) in relation to that direction.
+public: DotProductFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
+        : MultivariateFieldEngine(start, end, numSamples) {}
+    std::vector<double> computeDotProduct(const Point3D& fixedVector) const {
+        std::vector<double> dotProducts;
+        //get field points is inherited from MultivariateFieldEngine, which generates the field points with their vector components (vx, vy, vz). We then compute the dot product of these vector components with the fixed vector for each point in the field and store the results in a new vector called dotProducts. This allows us to analyze how much of the field is aligned with the fixed vector across the entire field.
+        dotProducts.reserve(getFieldPoints().size());
+        for (const auto& point : getFieldPoints()) {
+            double dot = point.vx * fixedVector.vx + point.vy * fixedVector.vy + point.vz * fixedVector.vz;
+            dotProducts.push_back(dot);
+        }
+        return dotProducts;
+    }
+};
+
+
 // ─── Emscripten Bindings ───
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
