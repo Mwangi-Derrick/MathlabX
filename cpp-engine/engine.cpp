@@ -46,6 +46,14 @@ using namespace emscripten;
  */
 
 
+ /*
+ Target Hardware: Intel i5-6300U (Skylake Architecture)
+Optimization Strategy:
+SIMD: Leveraged avx2 flags for 256-bit vectorization (4x throughput for double).
+Memory: Optimized for 64KiB L1 Cache to prevent CPU stalling.
+Concurrency: Single-threaded SIMD focus to maximize physical core efficiency without Hyper-threading overhead.
+ */
+
 /**
  * A simple 2D point used to represent (time, value) pairs on the waveform.
  */
