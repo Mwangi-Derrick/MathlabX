@@ -2,6 +2,8 @@
  * MathlabX — AC Wave RLC Circuit Engine
  * 
  * Core numerical kernel for generating AC waveforms (sine, cosine).
+ * and computing RLC circuit parameters (impedance, phase angle, power).
+ * as well as vector fields for visualizations.
  * Compiled to WebAssembly via Emscripten and consumed by the React frontend.
  *
  * Build: em++ engine.cpp -o engine.mjs --bind -O2 -s MODULARIZE=1 -s EXPORT_ES6=1
@@ -212,23 +214,32 @@ public:
         int _amp_x = 1, int _amp_y = 1, int _amp_z = 1) {
             fieldPoints.clear();
             if (samples < 2) return;
-
+            struct Amplitude {
+                double x;
+                double y;
+                double z;
+            };
+            struct Frequency {
+                double x;
+                double y;
+                double z;
+            };
             double step = (domainEnd - domainStart) / (samples - 1);
             //.reserve() is used to pre-allocate memory for the vector, which can improve performance by reducing the number of reallocations needed as we push back new points.
             fieldPoints.reserve(samples);
-            int x_freq,y_freq,z_freq = _x_freq, _y_freq, _z_freq;
-            int amp_x, amp_y, amp_z = _amp_x, _amp_y, _amp_z; // we can also have amplitude variables to control the strength of each component of the
+            Frequency freq = {_x_freq, _y_freq, _z_freq};
+            Amplitude amp = {_amp_x, _amp_y, _amp_z};
             for (int i = 0; i < samples; ++i) {
                 double t = domainStart + i * step; // time in seconds
                 
                 // Example: A simple rotating vector field
-                double x = amp_x * std::cos(x_freq * M_PI * t);
-                double y = amp_y * std::sin(y_freq * M_PI * t);
-                double z = amp_z * 0.0;
+                double x = amp.x * std::cos(freq.x * M_PI * t);
+                double y = amp.y * std::sin(freq.y * M_PI * t);
+                double z = amp.z * 0.0;
 
                 // Field vector could represent something like an electric field
-                double vx = -amp_x * std::sin(x_freq * M_PI * t); // derivative of x
-                double vy = amp_y * std::cos(y_freq * M_PI * t);  // derivative of y
+                double vx = -amp.x * std::sin(freq.x * M_PI * t); // derivative of x
+                double vy = amp.y * std::cos(freq.y * M_PI * t);  // derivative of y
                 double vz = 0.0;
 
                 fieldPoints.push_back({x, y, z, vx, vy, vz});
@@ -245,25 +256,31 @@ private:
 public:
     VectorFieldEngine2D(double start = 0.0, double end = 0.05, int numSamples = 800) 
         : WaveEngine(start, end, numSamples) {}
-
-        void generateField(int _x_freq = 2, int _y_freq = 2,
-        int _amp_x = 1, int _amp_y = 1) {
+        struct Amplitude {
+        double x;
+        double y;
+    };
+    struct Frequency {
+        double x;
+        double y;
+    };
+        void generateField(Frequency freq = {2, 2}, Amplitude amp = {1, 1}) {
             fieldPoints.clear();
             if (samples < 2) return;
 
             double step = (domainEnd - domainStart) / (samples - 1);
             fieldPoints.reserve(samples);
                 //we can have a variable that allows us to modify(2,2) the frequencies of the x and y components to create different patterns in the field. For example, we could have a slider in the UI that allows the user to adjust these frequencies in real-time, creating an interactive visualization of the vector field.
-                int x_freq = _x_freq;
-                int y_freq = _y_freq;
-                int amp_x = _amp_x;
-                int amp_y = _amp_y; // we can also have amplitude variables to control the
+                int x_freq = freq.x;
+                int y_freq = freq.y;
+                int amp_x = amp.x;
+                int amp_y = amp.y; // we can also have amplitude variables to control the
             for (int i = 0; i < samples; ++i) {
                 double t = domainStart + i * step; // time in seconds
                 
                 // Example: A simple oscillating vector field
-                double x = amp_x * std::cos(x_freq * M_PI * t);
-                double y = amp_y * std::sin(y_freq * M_PI * t);
+                double x = amp.x * std::cos(freq.x * M_PI * t);
+                double y = amp.y * std::sin(freq.y * M_PI * t);
                 // In a 2D field, we might just store the position (x, y) and infer the vector from the change in position over time.
                 //.push_back() is used to add a new Point2D to the fieldPoints vector, which represents the position of the field at time t.
                 //.push_back is a method of Vector that adds a new element to the end of the vector. In this case, we are adding a Point2D struct that contains the x and y coordinates of the field at time t.
@@ -290,16 +307,24 @@ private:
 public:
     MultivariateFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
         : WaveEngine(start, end, numSamples) {}
-        
-    void generateField(int _x_freq = 2, int _y_freq = 2, int _z_freq = 4
-    int _amp_x = 1, int _amp_y = 1, int _amp_z = 1) {
+    // we will refactor to store the vector components in the Point3D struct, allowing us to represent the direction and magnitude of the field at each location. This would enable us to create vector fields that represent things like fluid flow or electromagnetic fields, and we can also plot 3d 4d shapes and perform complex calculus given a funstion(x,y,z) and its partial derivatives, we can plot the function and its gradient field, or even compute line integrals and surface integrals over the field. This would allow us to visualize and analyze complex multivariate functions in a way that is not possible with simple 2D plots.
+    struct Amplitude {
+        double x;
+        double y;
+        double z;
+    };
+    struct Frequency {
+        double x;
+        double y;
+        double z;
+    };
+    void generateField(Frequency freq = {2, 2, 4}, Amplitude amp = {1, 1, 1}) {
         fieldPoints.clear();
         if (samples < 2) return;
         double step = (domainEnd - domainStart) / (samples - 1);
         fieldPoints.reserve(samples);
          //we can have a variable that allows us to modify(2,2,4) the frequencies of the x,y,z components to create different patterns in the field. For example, we could have a slider in the UI that allows the user to adjust these frequencies in real-time, creating an interactive visualization of the multivariate field.
-        int x_freq,y_freq,z_freq = _x_freq, _y_freq, _z_freq;
-        int amp_x, amp_y, amp_z = _amp_x, _amp_y, _amp_z; // we can also have amplitude variables to control the strength of each component of the field, allowing for even more customization and complexity in the patterns we can create. 
+// we can also have amplitude variables to control the strength of each component of the field, allowing for even more customization and complexity in the patterns we can create. 
         for (int i = 0; i < samples; ++i) {
             double t = domainStart + i * step; // time in seconds
             
@@ -307,14 +332,14 @@ public:
             // we can define a function f(x, y, z) = cos(2πt) + sin(2πt) + cos(4πt) and then compute the field points based on this function. The x, y, z coordinates could represent the position of the field at time t, while the vx, vy, vz components could represent the vector field derived from the function's gradient or some other rule.
             // cos is x factor and sin is y factor, and the z factor is a higher frequency cosine to add some complexity to the field. The vector components (vx, vy, vz) are derived from the derivatives of the function with respect to time, which gives us a sense of how the field is changing at each point in time.
 
-            double x = amp_x * std::cos(x_freq * M_PI * t);
-            double y = amp_y * std::sin(y_freq * M_PI * t);
-            double z = amp_z * std::cos(z_freq * M_PI * t);
+            double x = amp.x * std::cos(freq.x * M_PI * t);
+            double y = amp.y * std::sin(freq.y * M_PI * t);
+            double z = amp.z * std::cos(freq.z * M_PI * t);
 
             // The vector components could be derived from the function's gradient or some other rule
-            double vx = -x_freq * M_PI * std::sin(x_freq * M_PI * t); // derivative of x
-            double vy = y_freq * M_PI * std::cos(y_freq * M_PI * t);  // derivative of y
-            double vz = -z_freq * M_PI * std::sin(z_freq * M_PI * t); // derivative of z
+            double vx = -freq.x * M_PI * std::sin(freq.x * M_PI * t); // derivative of x
+            double vy = freq.y * M_PI * std::cos(freq.y * M_PI * t);  // derivative of y
+            double vz = -freq.z * M_PI * std::sin(freq.z * M_PI * t); // derivative of z
 
             fieldPoints.push_back({x, y, z, vx, vy, vz});
         }
