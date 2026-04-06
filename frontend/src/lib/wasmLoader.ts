@@ -13,9 +13,9 @@
  * It avoids polluting window.Module and works cleanly with Vite's module system.
  */
 
-import type { WaveEngineModule, WaveEngineInstance } from '../wasm/engine.d'
+import type { WaveEngineModule, WaveEngineInstance } from '../../../wasm/engine.d'
 // @ts-ignore — Emscripten-generated file, no TS source
-import createModule from '../wasm/engine.mjs'
+import createModule from '../../../wasm/engine.mjs'
 
 // ─── Module Singleton ────────────────────────────────────────────────────────
 // Cache the module promise so we only initialize WASM once,
@@ -37,7 +37,8 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
   }
 
   console.log('[WASM] Initializing module...')
-
+  const wasm_engine_path = new URL('../../../wasm/engine.mjs', import.meta.url).href
+  console.log(`[WASM] Loading from ${wasm_engine_path}`)
   modulePromise = createModule({
     // Emscripten calls locateFile() to find the .wasm binary.
     // We use import.meta.url so the path resolves correctly whether

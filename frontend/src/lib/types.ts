@@ -11,4 +11,4 @@ export type {
   Point2DVector, 
   WaveEngineInstance, 
   WaveEngineModule 
-} from '../wasm/engine.d'
+} from '../../../wasm/engine.d'
