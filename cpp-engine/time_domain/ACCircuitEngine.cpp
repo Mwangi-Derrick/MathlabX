@@ -1,5 +1,9 @@
 #include "ACCircuitEngine.h"
 #include "WaveEngine.h"
+#include <cmath>
+#include <vector>
+#include <corecrt_math_defines.h>
+#define _USE_MATH_DEFINES // Required for MSVC/Windows
 
 /**
  * A simple 2D point used to represent (time, value) pairs on the waveform.
