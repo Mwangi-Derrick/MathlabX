@@ -1,4 +1,10 @@
 # MathlabX ⚡
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![WebAssembly](https://img.shields.io/badge/WebAssembly-✓-654FF0.svg)](https://webassembly.org/)
+[![SIMD](https://img.shields.io/badge/SIMD-Optimized-FF6B6B.svg)](docs/SIMD_DEEP_DIVE.md)
+[![C++17](https://img.shields.io/badge/C++-17-00599C.svg)](https://isocpp.org/)
+
 ### AC & Vector Field Simulator for EEE Students
 
 > **A WebAssembly-powered simulation engine** that visualizes Electromagnetic fields, AC signals, and vector calculus — compiled from C++ and running directly in your browser.
