@@ -13,6 +13,8 @@
  *   ω = 2πf
  *   T = 1/f
  */
+ 
+//  #include <wasm_simd128.h> handle simd for wasm
 
 #include <vector>
 #include <cmath>

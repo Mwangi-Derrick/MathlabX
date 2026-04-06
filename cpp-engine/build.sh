@@ -98,6 +98,7 @@ em++ "$SOURCE" \
     -s WASM=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s ENVIRONMENT=web
+    # -msimd128: This is the magic flag. It tells the compiler to use 128-bit SIMD instructions. Without this, your C++ might try to use SIMD, but the Wasm binary won't support it.
 
 # ─── Verify output ──────────────────────────────────────────────────────────
 
