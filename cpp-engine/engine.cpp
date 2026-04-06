@@ -257,7 +257,9 @@ public:
                 // Example: A simple oscillating vector field
                 double x = std::cos(2 * M_PI * t);
                 double y = std::sin(2 * M_PI * t);
-
+                // In a 2D field, we might just store the position (x, y) and infer the vector from the change in position over time.
+                //.push_back() is used to add a new Point2D to the fieldPoints vector, which represents the position of the field at time t.
+                //.push_back is a method of Vector that adds a new element to the end of the vector. In this case, we are adding a Point2D struct that contains the x and y coordinates of the field at time t.
                 fieldPoints.push_back({x, y});
             }
         }
