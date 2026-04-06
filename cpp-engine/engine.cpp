@@ -37,6 +37,45 @@ struct Point3D {
     double vx, vy, vz; // The field vector at this point
 };
 
+// we can have a flag that allows users to choose simd or non-simd implementations of the wave generation and field generation functions, allowing them to optimize for performance or compatibility as needed. For example, we could have a boolean parameter in the generateWaves() and generateField() functions that determines whether to use SIMD instructions or not, and then implement both versions of the algorithms accordingly. This would give users the flexibility to choose the best option for their specific use case and hardware capabilities.
+//and a wrapper funstion that acpets generic funtion and wraps if in a simd enabled block, and if simd is not available it just runs the function normally, this way we can have a single codebase that can take advantage of simd when available without sacrificing compatibility with older hardware or browsers that do not support simd.
+//so when user toggles the simd flag on browser we run smid enabled block or not, and we can also have a fallback mechanism that detects if simd is not available and automatically falls back to the non-simd implementation, ensuring that the application remains functional even on platforms that do not support simd.
+//simd will help especially when using many samples for the wave generation and field generation, as it can process multiple data points in parallel, significantly improving performance and allowing for smoother visualizations and more complex computations in real-time. This is particularly beneficial for applications like MathlabX that aim to provide interactive and visually rich experiences for users exploring mathematical concepts.
+//also we can use std::thread and std::async to run the wave generation and field generation in parallel, allowing us to take advantage of multi-core processors and further improve performance, especially when generating complex fields or using a large number of samples. This would allow us to keep the UI responsive while performing computationally intensive tasks in the background, enhancing the overall user experience of MathlabX.
+// we are using double so it will be slower than using float and int
+/*this laptop is a 4-core processor 64bit for normal operation and i think 128 or 256 bit for the smid registers
+an int is 32 bits , float is 32 bits, double is 64 bits 
+so meaning nromally this laptop if using int and float it will process 2 numbers per cycle
+when using double it will process 1 number per cycle
+when using simd it will process 4 numbers per cycle for float or int 
+and 2 numbers per cycle for double 
+cycle here means the frequency of the clock of the processor 
+to be accurate we can check the specs of the machine, ie the clock speed/frequency, the number of threads and the SIMD capabilities (number of normal and simd registers)
+how do we chec all these specs...i can use bash and run these commands
+...tell me?
+    1. How to check specs in Bash (Linux/Ubuntu - JKUAT Labs)
+    To get the exact hardware details you mentioned, use these commands:
+    CPU Architecture & SIMD flags:
+    bash
+    lscpu
+    Use code with caution.
+
+    Look for "Flags". If you see sse, avx, or avx2, your CPU has 128-bit or 256-bit SIMD registers.
+    Detailed Processor info:
+    bash
+    cat /proc/cpuinfo | grep "model name" | uniq
+    cat /proc/cpuinfo | grep "flags" | uniq
+    Use code with caution.
+
+    Clock Speed (Frequency):
+    bash
+    watch -n 1 "grep 'cpu MHz' /proc/cpuinfo"
+*/
+bool simd_available() {
+    // Emscripten provides a way to check for SIMD support at runtime
+    return emscripten::has_simd_support();
+}
+
 /**
  * WaveEngine — The Parent Class
  * Handles basic waveform allocation and point storage.
