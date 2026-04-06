@@ -200,6 +200,42 @@ public:
     std::vector<Point2D> getCurrentPoints() const { return pointsCurrent; }
 };
 
+class VectorFieldEngine : public WaveEngine {
+private:
+    std::vector<Point3D> fieldPoints;
+public:
+    //the = in the params are the default values for the time domain and number of samples, which can be overridden when creating an instance of VectorFieldEngine
+    VectorFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
+        : WaveEngine(start, end, numSamples) {}
+
+        void generateField() {
+            fieldPoints.clear();
+            if (samples < 2) return;
+
+            double step = (domainEnd - domainStart) / (samples - 1);
+            //.reserve() is used to pre-allocate memory for the vector, which can improve performance by reducing the number of reallocations needed as we push back new points.
+            fieldPoints.reserve(samples);
+
+            for (int i = 0; i < samples; ++i) {
+                double t = domainStart + i * step; // time in seconds
+                
+                // Example: A simple rotating vector field
+                double x = std::cos(2 * M_PI * t);
+                double y = std::sin(2 * M_PI * t);
+                double z = 0.0;
+
+                // Field vector could represent something like an electric field
+                double vx = -std::sin(2 * M_PI * t); // derivative of x
+                double vy = std::cos(2 * M_PI * t);  // derivative of y
+                double vz = 0.0;
+
+                fieldPoints.push_back({x, y, z, vx, vy, vz});
+            }
+        }
+
+    std::vector<Point3D> getFieldPoints() const { return fieldPoints; }
+};
+
 // ─── Emscripten Bindings ───
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
