@@ -5,9 +5,6 @@
 #include <cmath>
 #include "../shared/structs.h"
 
-
-// ─── Base Class ───────────────────────────────────────────────────────────────
-
 class SpatialFieldEngine {
 protected:
     int resX, resY, resZ;
@@ -22,22 +19,15 @@ public:
         double xmin = -5.0, double xmax = 5.0,
         double ymin = -5.0, double ymax = 5.0,
         double zmin = -5.0, double zmax = 5.0
-    ) : resX(rx), resY(ry), resZ(rz),
-        xMin(xmin), xMax(xmax), yMin(ymin), yMax(ymax), zMin(zmin), zMax(zmax)
-    {}
+    );
     virtual ~SpatialFieldEngine() = default;
 
-    void setResolution(int rx, int ry, int rz = 1) { }
-
+    void setResolution(int rx, int ry, int rz = 1);
     void setBounds(double xmin, double xmax, double ymin, double ymax,
-                   double zmin = -5.0, double zmax = 5.0) { }
-private:
-    void recomputeSteps() {};
+                   double zmin = -5.0, double zmax = 5.0);
+protected:
+    void recomputeSteps();
 };
-
-// ─── 2D Engines ───────────────────────────────────────────────────────────────
-
-// ─── 2D Engines ───────────────────────────────────────────────────────────────
 
 class SpatialFieldEngine2D : public SpatialFieldEngine {
 protected:
@@ -50,26 +40,16 @@ public:
         int rx = 20, int ry = 20,
         double xmin = -5.0, double xmax = 5.0,
         double ymin = -5.0, double ymax = 5.0
-    ) : SpatialFieldEngine(rx, ry, 1, xmin, xmax, ymin, ymax),
-        ampX(1.0), ampY(1.0), freqX(1.0), freqY(1.0), preset("rotation") {}
+    );
 
-    void setPreset(const std::string& name) { preset = name; }
-    void setCustomParams(double ax, double ay, double fx, double fy) {
-    }
-
-    void evaluateField(double x, double y, double& fx, double& fy) const {
-    }
-
-    void generateGrid() {
-    }
-
-    std::vector<GridPoint2D> getGrid() const { return grid; }
-    int getResX() const { }
-    int getResY() const {  }
+    void setPreset(const std::string& name);
+    void setCustomParams(double ax, double ay, double fx, double fy);
+    void evaluateField(double x, double y, double& fx, double& fy) const;
+    void generateGrid();
+    std::vector<GridPoint2D> getGrid() const;
+    int getResX() const;
+    int getResY() const;
 };
-
-
-// ─── 3D Engines ───────────────────────────────────────────────────────────────
 
 class SpatialFieldEngine3D : public SpatialFieldEngine {
 protected:
@@ -80,24 +60,19 @@ protected:
 public:
     SpatialFieldEngine3D(
         int rx = 10, int ry = 10, int rz = 10,
-        double xmin = -5.0, double xmax = 5.0, double ymin = -5.0, double ymax = 5.0, double zmin = -5.0, double zmax = 5.0
-    ) : SpatialFieldEngine(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax),
-        ampX(1.0), ampY(1.0), ampZ(1.0), freqX(1.0), freqY(1.0), freqZ(1.0), preset("rotation") {}
+        double xmin = -5.0, double xmax = 5.0, 
+        double ymin = -5.0, double ymax = 5.0, 
+        double zmin = -5.0, double zmax = 5.0
+    );
 
-    void setPreset(const std::string& name) {}
-    void setCustomParams(double ax, double ay, double az, double fx, double fy, double fz) {
-    }
-
-    void evaluateField3D(double x, double y, double z, double& fx, double& fy, double& fz) const {
-    }
-
-    void generateGrid() {
-    }
-
-    std::vector<GridPoint3D> getGrid() const {}
-    int getResX() const {}
-    int getResY() const {}
-    int getResZ() const {}
+    void setPreset(const std::string& name);
+    void setCustomParams(double ax, double ay, double az, double fx, double fy, double fz);
+    void evaluateField3D(double x, double y, double z, double& fx, double& fy, double& fz) const;
+    void generateGrid();
+    std::vector<GridPoint3D> getGrid() const;
+    int getResX() const;
+    int getResY() const;
+    int getResZ() const;
 };
 
 #endif // SPATIAL_ENGINE_H

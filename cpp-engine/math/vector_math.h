@@ -11,15 +11,15 @@
 it is used for atomic math operations on individual points
 */
 namespace VectorMath {
-    inline double divergence2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
+     double divergence2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
                                const GridPoint2D& prevY, const GridPoint2D& nextY,
                                double dx, double dy);
 
-    inline double curl2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
+     double curl2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
                          const GridPoint2D& prevY, const GridPoint2D& nextY,
                          double dx, double dy);
 
-    inline double divergence3D(const GridPoint3D& pX, const GridPoint3D& nX,
+     double divergence3D(const GridPoint3D& pX, const GridPoint3D& nX,
                                const GridPoint3D& pY, const GridPoint3D& nY,
                                const GridPoint3D& pZ, const GridPoint3D& nZ,
                                double dx, double dy, double dz);

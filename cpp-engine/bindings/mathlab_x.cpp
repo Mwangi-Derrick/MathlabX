@@ -68,10 +68,10 @@
  *   (1 `double` per cycle), ensuring complete operational stability on legacy 
  *   microarchitectures and non-SIMD browser constraints.
  */
-bool simd_available() {
-    // Emscripten provides a way to check for SIMD support at runtime
-    return emscripten::has_simd_support();
-}
+// bool simd_available() {
+//     // Emscripten provides a way to check for SIMD support at runtime
+//     return emscripten::has_simd_support();
+// }
 
 
 

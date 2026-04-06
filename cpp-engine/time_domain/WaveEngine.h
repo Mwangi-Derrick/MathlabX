@@ -12,20 +12,11 @@ protected:
     int samples;        // Number of samples
 
 public:
-    WaveEngine(double start = 0.0, double end = 0.05, int numSamples = 800)
-        : domainStart(start), domainEnd(end), samples(numSamples) {}
-    
+    WaveEngine(double start = 0.0, double end = 0.05, int numSamples = 800);
     virtual ~WaveEngine() = default;
 
-    void setSamples(int numSamples) {
-        if (numSamples < 10) numSamples = 10;
-        if (numSamples > 10000) numSamples = 10000;
-        samples = numSamples;
-    }
-
-    int getSamples() const {
-        return samples;
-    }
+    void setSamples(int numSamples);
+    int getSamples() const;
 };
 
 #endif // WAVE_ENGINE_H
