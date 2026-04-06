@@ -2,7 +2,7 @@
 it is used for atomic math operations on individual points
 */
 
-#include "VectorMath.h"
+#include "vector_math.h"
 
 namespace VectorMath {
     inline double divergence2D(const GridPoint2D& prevX, const GridPoint2D& nextX,
