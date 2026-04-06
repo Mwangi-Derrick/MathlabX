@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 
 #ifdef __x86_64__
 #include <cpuid.h> // For Intel/AMD hardware detection
@@ -26,3 +28,26 @@ void checkHardware() {
     }
 }
 
+
+double getCpuFrequency() {
+    std::ifstream cpuinfo("/proc/cpuinfo");
+    std::string line;
+    while (std::getline(cpuinfo, line)) {
+        if (line.find("cpu MHz") != std::string::npos) {
+            size_t pos = line.find(":");
+            return std::stod(line.substr(pos + 1)); // Returns MHz
+        }
+    }
+    return 0.0;
+}
+
+void printSystemCapability() {
+    double mhz = getCpuFrequency();
+    int cores = 2; // From your lscpu
+    int simd_factor = 4; // For AVX2 doubles
+
+    double peak = (mhz / 1000.0) * cores * simd_factor;
+    
+    std::cout << "Detected Clock: " << mhz << " MHz" << std::endl;
+    std::cout << "Theoretical Peak (SIMD): " << peak << " GFLOPS" << std::endl;
+}
