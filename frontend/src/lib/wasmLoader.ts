@@ -13,7 +13,7 @@
  * It avoids polluting window.Module and works cleanly with Vite's module system.
  */
 
-import type { WaveEngineModule, WaveEngineInstance } from '../../../wasm/engine.d'
+import type { WaveEngineModule, WaveEngineInstance } from '../../types/mathlab_x.d.ts'
 // @ts-ignore — Emscripten-generated file, no TS source
 import createModule from '../../../wasm/engine.mjs'
 
@@ -37,7 +37,7 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
   }
 
   console.log('[WASM] Initializing module...')
-  const wasm_engine_path = new URL('../../../wasm/engine.mjs', import.meta.url).href
+  const wasm_engine_path = new URL('../../../wasm/mathlab_x.mjs', import.meta.url).href
   console.log(`[WASM] Loading from ${wasm_engine_path}`)
   modulePromise = createModule({
     // Emscripten calls locateFile() to find the .wasm binary.
@@ -45,11 +45,11 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
     // we're running in Vite dev server or a production build.
     locateFile: (path: string) => {
       if (path.endsWith('.wasm')) {
-        return new URL('../wasm/engine.wasm', import.meta.url).href
+        return new URL('../wasm/mathlab_x.wasm', import.meta.url).href
       }
       return path
     }
-  }).then((module) => {
+  }).then((module: WaveEngineModule) => {
     // Validate that the expected bindings exist
     if (!module || typeof module.WaveEngine !== 'function') {
       throw new Error(
@@ -59,7 +59,7 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
     }
     console.log('[WASM] ✓ Module initialized — WaveEngine class available')
     return module
-  }).catch((err) => {
+  }).catch((err: unknown) => {
     // Reset the cached promise so a retry is possible
     modulePromise = null
     const msg = err instanceof Error ? err.message : String(err)
