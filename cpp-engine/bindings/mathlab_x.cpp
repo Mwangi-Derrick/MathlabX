@@ -21,17 +21,13 @@
 #include <vector>
 #include <cmath>
 #include <emscripten/bind.h>
-#include "../math/vectorMath.h"
+#include "../math/vector_math.h"
 #include "../time_domain/ACCircuitEngine.h"
 #include "../time_domain/WaveEngine.h"
 #include "../spatial/spatialEngine.h"
 #include "../spatial/divergence.h"
 #include "../spatial/curl.h"
 #include "../checkHardware.h"
-
-
-using namespace emscripten;
-
 
 /**
  * ARCHITECTURE NOTE:
