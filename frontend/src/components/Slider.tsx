@@ -1,3 +1,8 @@
+/**
+ * Slider — custom-styled range input for controlling engine parameters.
+ * Each slider's value is piped directly to the C++ WASM engine.
+ */
+
 import React from 'react'
 
 interface SliderProps {
@@ -17,13 +22,13 @@ export const Slider: React.FC<SliderProps> = ({
   max,
   step,
   onChange,
-  formatValue = (val) => val.toFixed(2),
+  formatValue = (val) => String(val),
 }) => {
   return (
-    <div className="mb-3">
-      <div className="flex justify-between items-center mb-1">
-        <label className="text-xs text-cet-slate-400 font-medium">{label}</label>
-        <span className="text-xs font-mono text-cet-slate-300">{formatValue(value)}</span>
+    <div className="slider-group">
+      <div className="slider-header">
+        <span className="slider-label">{label}</span>
+        <span className="slider-value">{formatValue(value)}</span>
       </div>
       <input
         type="range"
@@ -32,7 +37,6 @@ export const Slider: React.FC<SliderProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-2 bg-cet-slate-700 rounded-lg appearance-none cursor-pointer accent-cet-blue-600"
       />
     </div>
   )

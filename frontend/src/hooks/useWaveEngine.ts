@@ -1,99 +1,174 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import type { WaveEngineModule, WaveEngineInstance, Point2D } from '../lib/types'
+/**
+ * useWaveEngine — React hook for interacting with the C++ WASM engine.
+ * 
+ * Lifecycle:
+ *   1. On mount: loads WASM module and creates a WaveEngine instance
+ *   2. Provides generate functions that call C++ methods and convert results
+ *   3. On unmount: calls engine.delete() to free C++ heap memory
+ * 
+ * All slider parameters (amplitude, frequency, phase, samples) are passed
+ * through to the C++ engine — no computation is done in JavaScript.
+ * The engine does the math, JS just renders the results.
+ */
 
-declare global {
-  interface Window {
-    Module: any
-  }
+import { useState, useEffect, useCallback, useRef } from 'react'
+import type { WaveEngineInstance, Point2D } from '../lib/types'
+import { createWaveEngine } from '../lib/wasmLoader'
+
+/** State returned by the hook */
+interface WaveEngineState {
+  /** Whether the WASM module is still loading */
+  loading: boolean
+  /** Error message if WASM failed to load, null otherwise */
+  error: string | null
+  /** Array of (x, y) points from the last generate call */
+  points: Point2D[]
+  /** Generate a sine wave with the given parameters — all params go to C++ */
+  generateSine: (amplitude: number, frequency: number, phase: number) => void
+  /** Generate a cosine wave with the given parameters — all params go to C++ */
+  generateCosine: (amplitude: number, frequency: number, phase: number) => void
+  /** Update the sample count on the engine — goes to C++ setSamples() */
+  setSamples: (samples: number) => void
 }
 
-export const useWaveEngine = () => {
-  const [engine, setEngine] = useState<WaveEngineInstance | null>(null)
-  const [points, setPoints] = useState<Point2D[]>([])
+export function useWaveEngine(): WaveEngineState {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const moduleRef = useRef<WaveEngineModule | null>(null)
+  const [points, setPoints] = useState<Point2D[]>([])
 
-  // Load wasm module
+  // Use a ref for the engine instance so:
+  //   1. The cleanup function always has the latest reference (no stale closure)
+  //   2. We don't trigger re-renders when the engine reference changes
+  const engineRef = useRef<WaveEngineInstance | null>(null)
+  const mountedRef = useRef(true)
+
+  // ─── Initialize WASM engine on mount ──────────────────────────────────────
+
   useEffect(() => {
-    const loadWasm = async () => {
-      try {
-        // Load the Wasm module using the Emscripten-generated loader
-        const script = document.createElement('script')
-        script.src = '/engine.js'
-        script.async = true
-        script.onload = () => {
-          // Wait for the module to initialize
-          if (window.Module) {
-            const initModule = async () => {
-              moduleRef.current = window.Module as WaveEngineModule
-              // Create a new WaveEngine instance
-              const newEngine = new moduleRef.current.WaveEngine(-500, 500, 800)
-              setEngine(newEngine)
-              setLoading(false)
-            }
+    mountedRef.current = true
 
-            if (window.Module.onRuntimeInitialized) {
-              window.Module.onRuntimeInitialized = initModule
-            } else {
-              initModule()
-            }
-          }
+    const init = async () => {
+      try {
+        const engine = await createWaveEngine(-500, 500, 800)
+        
+        if (!mountedRef.current) {
+          // Component unmounted while we were loading — clean up immediately
+          engine.delete()
+          return
         }
-        script.onerror = () => {
-          setError('Failed to load Wasm module')
-          setLoading(false)
-        }
-        document.body.appendChild(script)
+
+        engineRef.current = engine
+        setLoading(false)
+        setError(null)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error loading Wasm')
+        if (!mountedRef.current) return
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(msg)
         setLoading(false)
       }
     }
 
-    loadWasm()
+    init()
 
+    // Cleanup: free the C++ engine instance when the component unmounts
     return () => {
-      if (engine) {
-        engine.delete()
+      mountedRef.current = false
+      if (engineRef.current) {
+        try {
+          engineRef.current.delete()
+          console.log('[Hook] ✓ WaveEngine instance freed')
+        } catch (e) {
+          // Engine may already be deleted in some edge cases
+          console.warn('[Hook] Engine cleanup warning:', e)
+        }
+        engineRef.current = null
       }
     }
   }, [])
 
+  // ─── Convert Emscripten vector to JS array ──────────────────────────────
+
+  /**
+   * Emscripten's register_vector<Point2D> produces a wrapper with .size() and .get(i),
+   * NOT a regular JavaScript array. We must convert it to use in React state.
+   * We also call .delete() on the vector wrapper to free its C++ memory.
+   */
+  const extractPoints = useCallback((wasmVector: any): Point2D[] => {
+    const result: Point2D[] = []
+    
+    if (!wasmVector || typeof wasmVector.size !== 'function') {
+      console.error('[Hook] Invalid vector from engine — expected .size() method')
+      return result
+    }
+
+    const count = wasmVector.size()
+    for (let i = 0; i < count; i++) {
+      const p = wasmVector.get(i)
+      result.push({ x: p.x, y: p.y })
+    }
+
+    // Free the temporary vector wrapper (the engine's internal vector is unaffected)
+    wasmVector.delete()
+
+    return result
+  }, [])
+
+  // ─── Generate functions ──────────────────────────────────────────────────
+
   const generateSine = useCallback(
-    (amplitude: number, frequency: number) => {
+    (amplitude: number, frequency: number, phase: number) => {
+      const engine = engineRef.current
       if (!engine) return
+
       try {
-        engine.generateSine(amplitude, frequency)
-        const newPoints = engine.getPoints()
-        setPoints(newPoints)
+        engine.generateSine(amplitude, frequency, phase)
+        const rawPoints = engine.getPoints()
+        setPoints(extractPoints(rawPoints))
       } catch (err) {
-        setError('Error generating sine wave')
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[Hook] generateSine error:', msg)
+        setError(msg)
       }
     },
-    [engine]
+    [extractPoints]
   )
 
   const generateCosine = useCallback(
-    (amplitude: number, frequency: number) => {
+    (amplitude: number, frequency: number, phase: number) => {
+      const engine = engineRef.current
       if (!engine) return
+
       try {
-        engine.generateCosine(amplitude, frequency)
-        const newPoints = engine.getPoints()
-        setPoints(newPoints)
+        engine.generateCosine(amplitude, frequency, phase)
+        const rawPoints = engine.getPoints()
+        setPoints(extractPoints(rawPoints))
       } catch (err) {
-        setError('Error generating cosine wave')
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[Hook] generateCosine error:', msg)
+        setError(msg)
       }
     },
-    [engine]
+    [extractPoints]
   )
 
+  const setSamples = useCallback((samples: number) => {
+    const engine = engineRef.current
+    if (!engine) return
+
+    try {
+      engine.setSamples(samples)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[Hook] setSamples error:', msg)
+    }
+  }, [])
+
   return {
-    engine,
-    points,
     loading,
     error,
+    points,
     generateSine,
     generateCosine,
+    setSamples,
   }
 }

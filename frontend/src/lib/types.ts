@@ -1,24 +1,14 @@
-// Wasm module types
-export interface Point2D {
-  x: number
-  y: number
-}
+/**
+ * Type definitions for MathlabX frontend.
+ * 
+ * These mirror the C++ types exposed via Emscripten Embind.
+ * The canonical type definitions are in src/wasm/engine.d.ts — 
+ * this file re-exports them for convenience.
+ */
 
-export interface WaveEngineModule {
-  WaveEngine: new (start: number, end: number, samples: number) => WaveEngineInstance
-  Point2DVector: Point2D[]
-  _malloc: (size: number) => number
-  _free: (ptr: number) => void
-}
-
-export interface WaveEngineInstance {
-  generateSine(amplitude: number, frequency: number): void
-  generateCosine(amplitude: number, frequency: number): void
-  getPoints(): Point2D[]
-  delete(): void
-}
-
-export interface WasmModule {
-  onRuntimeInitialized?: () => void
-  instantiateWasm?: (imports: any, successCallback: (module: any) => void) => undefined
-}
+export type { 
+  Point2D, 
+  Point2DVector, 
+  WaveEngineInstance, 
+  WaveEngineModule 
+} from '../wasm/engine.d'

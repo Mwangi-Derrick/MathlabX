@@ -1,105 +1,91 @@
-import type { WaveEngineModule } from './types'
+/**
+ * WASM Module Loader
+ * 
+ * Loads and initializes the Emscripten-compiled C++ wave engine.
+ * 
+ * Architecture:
+ *   1. engine.cpp is compiled with MODULARIZE=1 + EXPORT_ES6=1
+ *   2. This produces engine.mjs (factory function) + engine.wasm (binary)
+ *   3. We import the factory, call it with locateFile config, and get back
+ *      a Promise<WaveEngineModule> containing our bound C++ classes
+ * 
+ * The factory-function approach (MODULARIZE) is the correct Emscripten pattern.
+ * It avoids polluting window.Module and works cleanly with Vite's module system.
+ */
 
-declare global {
-  interface Window {
-    Module?: any
-  }
-}
+import type { WaveEngineModule, WaveEngineInstance } from '../wasm/engine.d'
+// @ts-ignore — Emscripten-generated file, no TS source
+import createModule from '../wasm/engine.mjs'
+
+// ─── Module Singleton ────────────────────────────────────────────────────────
+// Cache the module promise so we only initialize WASM once,
+// even if multiple components call loadWasmModule() concurrently.
 
 let modulePromise: Promise<WaveEngineModule> | null = null
 
-export const loadWasmModule = (): Promise<WaveEngineModule> => {
-  // Return cached promise if already loading/loaded
+/**
+ * Load and initialize the WASM module.
+ * Returns a cached promise on subsequent calls — WASM is only loaded once.
+ * 
+ * The locateFile callback tells Emscripten where to find the .wasm binary.
+ * import.meta.url resolves relative to THIS file's location, so Vite
+ * can correctly resolve the path in both dev and production builds.
+ */
+export function loadWasmModule(): Promise<WaveEngineModule> {
   if (modulePromise) {
-    console.log('[WASM] Returning cached module promise')
     return modulePromise
   }
 
-  modulePromise = new Promise<WaveEngineModule>((resolve, reject) => {
-    console.log('[WASM] Starting module load...')
+  console.log('[WASM] Initializing module...')
 
-    // Check if already loaded in window
-    if (window.Module && window.Module.WaveEngine) {
-      console.log('[WASM] ✓ Module already in window.Module')
-      resolve(window.Module as WaveEngineModule)
-      return
-    }
-
-    // Set up Emscripten module object BEFORE loading script
-    window.Module = window.Module || {}
-    window.Module.onRuntimeInitialized = () => {
-      console.log('[WASM] ✓ Runtime initialized')
-      if (window.Module && window.Module.WaveEngine) {
-        console.log('[WASM] ✓ WaveEngine class available')
-        resolve(window.Module as WaveEngineModule)
-      } else {
-        console.error('[WASM] ✗ WaveEngine class not found after initialization')
-        reject(new Error('WaveEngine class not found in Module'))
+  modulePromise = createModule({
+    // Emscripten calls locateFile() to find the .wasm binary.
+    // We use import.meta.url so the path resolves correctly whether
+    // we're running in Vite dev server or a production build.
+    locateFile: (path: string) => {
+      if (path.endsWith('.wasm')) {
+        return new URL('../wasm/engine.wasm', import.meta.url).href
       }
+      return path
     }
-
-    // Load the Wasm module script
-    console.log('[WASM] Loading engine.js...')
-    const script = document.createElement('script')
-    script.src = '/engine.js'
-    script.type = 'text/javascript'
-    script.crossOrigin = 'anonymous'
-
-    script.onload = () => {
-      console.log('[WASM] ✓ engine.js script loaded')
+  }).then((module) => {
+    // Validate that the expected bindings exist
+    if (!module || typeof module.WaveEngine !== 'function') {
+      throw new Error(
+        'WASM module loaded but WaveEngine class not found. ' +
+        'Check that engine.cpp has EMSCRIPTEN_BINDINGS and was compiled with --bind.'
+      )
     }
-
-    script.onerror = (event) => {
-      console.error('[WASM] ✗ Failed to load engine.js', event)
-      reject(new Error(`Failed to load engine.js: ${event}`))
-    }
-
-    // Set timeout in case onRuntimeInitialized never fires
-    const timeout = setTimeout(() => {
-      console.error('[WASM] ✗ Timeout waiting for runtime initialization')
-      reject(new Error('Wasm runtime initialization timeout'))
-    }, 10000)
-
-    // Store original callback
-    const origCallback = window.Module.onRuntimeInitialized
-    window.Module.onRuntimeInitialized = () => {
-      clearTimeout(timeout)
-      console.log('[WASM] ✓ Timeout cleared, runtime initialized')
-      if (typeof origCallback === 'function') {
-        origCallback()
-      }
-      if (window.Module && window.Module.WaveEngine) {
-        console.log('[WASM] ✓ WaveEngine ready')
-        resolve(window.Module as WaveEngineModule)
-      } else {
-        console.error('[WASM] ✗ WaveEngine not available')
-        reject(new Error('WaveEngine not available'))
-      }
-    }
-
-    // Append script to document
-    document.head.appendChild(script)
-    console.log('[WASM] Script tag appended to head')
+    console.log('[WASM] ✓ Module initialized — WaveEngine class available')
+    return module
+  }).catch((err) => {
+    // Reset the cached promise so a retry is possible
+    modulePromise = null
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[WASM] ✗ Failed to initialize:', msg)
+    throw err
   })
 
   return modulePromise
 }
 
-export const createWaveEngine = async (
+/**
+ * Create a new WaveEngine instance.
+ * 
+ * @param domainStart  Left boundary of the x-axis (default -500)
+ * @param domainEnd    Right boundary of the x-axis (default 500)
+ * @param samples      Number of sample points to compute (default 800)
+ * @returns A WaveEngine instance — CALLER MUST call .delete() when done
+ */
+export async function createWaveEngine(
   domainStart: number = -500,
   domainEnd: number = 500,
   samples: number = 800
-) => {
-  console.log('[WaveEngine] Creating engine...')
+): Promise<WaveEngineInstance> {
   const module = await loadWasmModule()
-  console.log('[WaveEngine] Module loaded, instantiating WaveEngine')
-  
-  try {
-    const engine = new module.WaveEngine(domainStart, domainEnd, samples)
-    console.log('[WaveEngine] ✓ Engine instance created', engine)
-    return engine
-  } catch (error) {
-    console.error('[WaveEngine] ✗ Failed to create engine:', error)
-    throw error
-  }
+
+  const engine = new module.WaveEngine(domainStart, domainEnd, samples)
+  console.log(`[WASM] ✓ WaveEngine created (domain: [${domainStart}, ${domainEnd}], samples: ${samples})`)
+
+  return engine
 }

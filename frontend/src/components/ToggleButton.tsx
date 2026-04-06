@@ -1,3 +1,8 @@
+/**
+ * ToggleButton — wave mode selector (sin / cos / both).
+ * Each mode has a distinct color to match the waveform rendering.
+ */
+
 import React from 'react'
 
 interface ToggleButtonProps {
@@ -13,24 +18,14 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   onClick,
   variant = 'sin',
 }) => {
-  const baseClass =
-    'flex-1 py-1 px-2 text-xs font-medium border border-cet-slate-600 rounded transition-all'
-
-  let activeClass = ''
-  if (isActive) {
-    if (variant === 'sin') {
-      activeClass = 'bg-cet-blue-50 border-cet-blue-600 text-cet-blue-800'
-    } else if (variant === 'cos') {
-      activeClass = 'bg-cet-green-50 border-cet-green-600 text-cet-green-700'
-    } else {
-      activeClass = 'bg-cet-orange-50 border-cet-orange-600 text-cet-orange-700'
-    }
-  } else {
-    activeClass = 'bg-transparent text-cet-slate-400 hover:bg-cet-slate-700'
-  }
+  // Map variant to CSS class when active
+  const activeClass = isActive ? `active-${variant}` : ''
 
   return (
-    <button onClick={onClick} className={`${baseClass} ${activeClass}`}>
+    <button
+      onClick={onClick}
+      className={`wave-btn ${activeClass}`}
+    >
       {label}
     </button>
   )
