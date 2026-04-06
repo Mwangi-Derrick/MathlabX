@@ -1,26 +1,31 @@
 /**
  * WaveCanvas — renders the waveform on an HTML5 Canvas.
  * 
- * Receives point data from the WASM engine and draws it with:
- *   - Configurable grid overlay
- *   - Axis lines with labels
- *   - Colored waveform(s) based on active mode (sin=blue, cos=green)
- *   - Animated tracking dot on the waveform
+ * Key design decision: FIXED Y-AXIS SCALE
+ * 
+ * The Y-axis uses a fixed reference amplitude (maxAmplitude prop, typically 200V)
+ * instead of auto-scaling. This means:
+ *   - When amplitude=200, the wave fills the entire canvas height
+ *   - When amplitude=100, the wave fills half the canvas height
+ *   - When amplitude=50, the wave is small — visually showing it shrunk
+ * 
+ * The C++ engine computes the ACTUAL y-values (e.g., amplitude=50 → y ∈ [-50,50]).
+ * The canvas maps those values against the fixed scale, so the slider DIRECTLY
+ * controls the visible wave height. No auto-normalization.
  * 
  * Canvas rendering notes:
  *   - Canvas API does NOT resolve CSS custom properties (var(--xxx)).
- *     We must use getComputedStyle() to read the actual values.
- *   - Canvas is resized to match its container on every render via ResizeObserver.
- *   - We use requestAnimationFrame for smooth 60fps animation.
+ *     We use getComputedStyle() to read the actual color values.
+ *   - Canvas is sized to match its container via devicePixelRatio for HiDPI.
  */
 
 import React, { useEffect, useRef, useCallback } from 'react'
 import type { Point2D } from '../lib/types'
 
 interface WaveCanvasProps {
-  /** Sine wave points from WASM engine */
+  /** Sine wave points from the C++ engine */
   sinePoints: Point2D[]
-  /** Cosine wave points from WASM engine */
+  /** Cosine wave points from the C++ engine */
   cosinePoints: Point2D[]
   /** Which wave mode is active */
   waveMode: 'sin' | 'cos' | 'both'
@@ -28,12 +33,19 @@ interface WaveCanvasProps {
   showGrid: boolean
   /** Current time value for the tracking dot animation */
   time: number
-  /** Current amplitude for dot positioning */
+  /** Current amplitude (used for tracking dot) */
   amplitude: number
-  /** Current frequency for dot positioning */
+  /** Current frequency (used for tracking dot) */
   frequency: number
-  /** Current phase for dot positioning */
+  /** Current phase (used for tracking dot) */
   phase: number
+  /**
+   * Maximum possible amplitude — defines the Y-axis scale.
+   * This should match the Amplitude slider's max value.
+   * By using a FIXED scale instead of auto-scaling, the waveform
+   * visually grows/shrinks when the amplitude slider moves.
+   */
+  maxAmplitude: number
 }
 
 /** Colors for the two waveforms */
@@ -49,6 +61,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
   amplitude,
   frequency,
   phase,
+  maxAmplitude,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -63,15 +76,12 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     return value || fallback
   }, [])
 
-  // Choose which points to render based on mode
-  const activePoints = waveMode === 'cos' ? cosinePoints : sinePoints
-
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
 
-    // Resize canvas to container dimensions (CSS pixels → device pixels for sharpness)
+    // Resize canvas to container (CSS pixels → device pixels for crisp lines)
     const rect = container.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
     canvas.width = rect.width * dpr
@@ -86,15 +96,11 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     const W = rect.width
     const H = rect.height
 
-    // Resolve CSS colors for canvas rendering
+    // Resolve CSS colors for canvas
     const bgColor = getCssVar('--bg-primary', '#0f172a')
-
-    // Detect if we're in dark or light mode
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches ||
-      bgColor.startsWith('#0') || bgColor.startsWith('#1')
-    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'
-    const axisColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-    const textColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'
+    const gridColor = 'rgba(255,255,255,0.06)'
+    const axisColor = 'rgba(255,255,255,0.15)'
+    const textColor = 'rgba(255,255,255,0.3)'
 
     // ─── Clear ──────────────────────────────────────────────────────
     ctx.fillStyle = bgColor
@@ -126,7 +132,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     ctx.strokeStyle = axisColor
     ctx.lineWidth = 1
 
-    // Horizontal axis (y=0 line)
+    // Horizontal axis (zero-voltage line)
     ctx.beginPath()
     ctx.moveTo(0, H / 2)
     ctx.lineTo(W, H / 2)
@@ -141,21 +147,56 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     // Axis labels
     ctx.font = '10px monospace'
     ctx.fillStyle = textColor
-    ctx.fillText('+V', 44, 16)
-    ctx.fillText('-V', 44, H - 6)
+    ctx.fillText(`+${maxAmplitude}V`, 44, 16)
+    ctx.fillText(`-${maxAmplitude}V`, 44, H - 6)
     ctx.fillText('t →', W - 32, H / 2 - 6)
 
-    // ─── Compute scaling factors ──────────────────────────────────
-    // scaleX maps point indices across the canvas width
-    // scaleY maps y-values (voltage) to canvas height, centered at midpoint
+    // ─── Y-axis scale markers ───────────────────────────────────────
+    // Show intermediate scale lines at ±50%, ±75% of max amplitude
+    const markers = [0.25, 0.5, 0.75]
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'
+    ctx.lineWidth = 0.5
+    ctx.setLineDash([4, 4])
+    const scaleYRef = (H / 2 - 20) / maxAmplitude
+    const cy = H / 2
+
+    for (const frac of markers) {
+      const yOffset = frac * maxAmplitude * scaleYRef
+      // Positive
+      ctx.beginPath()
+      ctx.moveTo(40, cy - yOffset)
+      ctx.lineTo(W, cy - yOffset)
+      ctx.stroke()
+      // Negative
+      ctx.beginPath()
+      ctx.moveTo(40, cy + yOffset)
+      ctx.lineTo(W, cy + yOffset)
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+
+    // ─── Draw waveform ──────────────────────────────────────────────
+    //
+    // CRITICAL: scaleY uses maxAmplitude (fixed), NOT the actual peak from the data.
+    // This is what makes the waveform visibly shrink/grow with amplitude:
+    //
+    //   maxAmplitude = 200 (slider max, always the same)
+    //   scaleY = (canvasHeight/2 - padding) / 200
+    //
+    //   amplitude=200 → y values up to ±200 → fills full height
+    //   amplitude=100 → y values up to ±100 → fills half height
+    //   amplitude=50  → y values up to ±50  → fills quarter height
+    //
+    // If we used auto-scaling (maxY from the data), all amplitudes
+    // would look identical — defeating the visual purpose of the slider.
+
+    const scaleY = (H / 2 - 20) / maxAmplitude  // FIXED scale against max possible amplitude
+    const cx = 40  // x-origin (after y-axis)
+
     const drawWave = (points: Point2D[], color: string, alpha: number) => {
       if (!points || points.length === 0) return
 
-      const maxY = Math.max(...points.map(p => Math.abs(p.y)), 1)
       const scaleX = (W - 50) / Math.max(points.length - 1, 1)
-      const scaleY = (H / 2 - 20) / maxY
-      const cx = 40   // canvas x-origin (after y-axis)
-      const cy = H / 2 // canvas y-origin (center line)
 
       ctx.beginPath()
       ctx.strokeStyle = color
@@ -164,6 +205,8 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
 
       points.forEach((point, i) => {
         const px = cx + i * scaleX
+        // point.y comes directly from C++: amplitude * sin(freq * x + phase)
+        // We scale it against the FIXED max amplitude, not the data's actual peak
         const py = cy - point.y * scaleY
         if (i === 0) {
           ctx.moveTo(px, py)
@@ -174,7 +217,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
       ctx.stroke()
       ctx.globalAlpha = 1
 
-      // Tracking dot — shows the midpoint of the animated wave
+      // Tracking dot — animated position based on current time
       const midIdx = Math.floor(points.length / 2)
       if (midIdx < points.length) {
         const dotX = cx + midIdx * scaleX
@@ -184,25 +227,57 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
           : amplitude * Math.cos(omega * time + phase)
         const dotY = cy - dotVal * scaleY
 
-        // Glow effect
+        // Glow effect around the tracking dot
         ctx.shadowColor = color
-        ctx.shadowBlur = 8
+        ctx.shadowBlur = 10
         ctx.beginPath()
-        ctx.arc(dotX, dotY, 4, 0, Math.PI * 2)
+        ctx.arc(dotX, dotY, 5, 0, Math.PI * 2)
         ctx.fillStyle = color
         ctx.fill()
+
+        // White center for visibility
         ctx.shadowBlur = 0
+        ctx.beginPath()
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2)
+        ctx.fillStyle = '#ffffff'
+        ctx.fill()
       }
     }
 
-    // ─── Draw waveform(s) ───────────────────────────────────────────
+    // ─── Render based on mode ───────────────────────────────────────
     if (waveMode === 'sin' || waveMode === 'both') {
       drawWave(sinePoints, SINE_COLOR, 1)
     }
     if (waveMode === 'cos' || waveMode === 'both') {
-      drawWave(cosinePoints, COSINE_COLOR, waveMode === 'both' ? 0.7 : 1)
+      drawWave(cosinePoints, COSINE_COLOR, waveMode === 'both' ? 0.75 : 1)
     }
-  }, [sinePoints, cosinePoints, waveMode, showGrid, time, amplitude, frequency, phase, getCssVar])
+
+    // ─── Amplitude reference lines ──────────────────────────────────
+    // Draw dashed lines at the current amplitude level so the user
+    // can see exactly where the wave peaks relative to the scale
+    if (amplitude < maxAmplitude * 0.95) {
+      const ampY = amplitude * scaleY
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+      ctx.lineWidth = 1
+      ctx.setLineDash([6, 4])
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - ampY)
+      ctx.lineTo(W, cy - ampY)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(cx, cy + ampY)
+      ctx.lineTo(W, cy + ampY)
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      // Label the amplitude lines
+      ctx.font = '9px monospace'
+      ctx.fillStyle = 'rgba(255,255,255,0.2)'
+      ctx.fillText(`${amplitude}V`, W - 40, cy - ampY - 4)
+      ctx.fillText(`-${amplitude}V`, W - 45, cy + ampY + 12)
+    }
+
+  }, [sinePoints, cosinePoints, waveMode, showGrid, time, amplitude, frequency, phase, maxAmplitude, getCssVar])
 
   // Formula label based on mode
   const formulaLabel =

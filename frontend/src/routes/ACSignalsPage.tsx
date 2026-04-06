@@ -6,25 +6,37 @@
  *   2. Sliders control amplitude, frequency, phase, and samples
  *   3. Every slider change calls into the C++ engine (no JS math for waveforms)
  *   4. The engine returns computed points, which WaveCanvas renders to <canvas>
- *   5. Metrics panel shows computed values (Vmax, Vrms, T, ω)
+ *   5. The canvas uses a FIXED Y-scale so amplitude changes are VISIBLE
  * 
- * Data flow:
- *   Slider → React state → useWaveEngine → C++ WaveEngine → points → WaveCanvas
+ * Data flow (amplitude example):
+ *   Amplitude slider → 50 → C++ generateSine(50, freq, phase)
+ *     → C++ computes y = 50 * sin(freq*x + phase) for each sample
+ *     → Returns 800 points with y ∈ [-50, 50]
+ *     → Canvas renders against fixed scale of 200 (slider max)
+ *     → Wave visually fills only 25% of canvas height
+ *   
+ *   Amplitude slider → 200 → C++ generateSine(200, freq, phase)
+ *     → C++ computes y = 200 * sin(freq*x + phase) for each sample
+ *     → Returns 800 points with y ∈ [-200, 200]
+ *     → Canvas renders against same fixed scale of 200
+ *     → Wave fills 100% of canvas height
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useWaveEngine } from '../hooks/useWaveEngine'
 import { WaveCanvas } from '../components/WaveCanvas'
 import { Slider } from '../components/Slider'
 import { ToggleButton } from '../components/ToggleButton'
 import { MetricCard } from '../components/MetricCard'
-import type { Point2D } from '../lib/types'
+
+/** Maximum amplitude value — must match the slider's max prop */
+const MAX_AMPLITUDE = 200
 
 export const ACSignalsPage: React.FC = () => {
   const {
-    points,
-    generateSine,
-    generateCosine,
+    sinePoints,
+    cosinePoints,
+    generate,
     setSamples: engineSetSamples,
     loading,
     error,
@@ -39,10 +51,6 @@ export const ACSignalsPage: React.FC = () => {
   const [phase, setPhase] = useState(0)
   const [samples, setSamples] = useState(800)
   const [time, setTime] = useState(0)
-
-  // Store both sine and cosine points for "both" mode
-  const [sinePoints, setSinePoints] = useState<Point2D[]>([])
-  const [cosinePoints, setCosinePoints] = useState<Point2D[]>([])
 
   // Animation ref for cleanup
   const animRef = useRef<number>(0)
@@ -68,64 +76,22 @@ export const ACSignalsPage: React.FC = () => {
 
   // ─── Regenerate waveform when parameters change ───────────────────────
   // Every slider triggers this effect, which calls into the C++ engine.
-  // The engine does the math; we just render the results.
+  // The hook's generate() function handles "both" mode internally by
+  // calling C++ generateSine() then generateCosine() in sequence.
 
-  const regenerate = useCallback(() => {
-    // Frequency is stored in Hz but the engine expects an angular scale factor.
-    // Convert: internal_freq = frequency * 1000 to get visible oscillations
-    // across the [-500, 500] domain.
+  useEffect(() => {
+    if (loading || error) return
+
+    // Frequency is stored as Hz but the engine uses an angular scale factor.
+    // Multiply by 1000 to produce visible oscillations across [-500, 500] domain.
     const internalFreq = frequency * 1000
 
-    if (waveMode === 'sin') {
-      generateSine(amplitude, internalFreq, phase)
-    } else if (waveMode === 'cos') {
-      generateCosine(amplitude, internalFreq, phase)
-    } else {
-      // "both" mode: generate sine, save points, then generate cosine
-      generateSine(amplitude, internalFreq, phase)
-    }
-  }, [amplitude, frequency, phase, waveMode, generateSine, generateCosine])
-
-  // When generate functions produce new points, route them to the correct buffer
-  useEffect(() => {
-    if (points.length === 0) return
-
-    if (waveMode === 'sin') {
-      setSinePoints(points)
-    } else if (waveMode === 'cos') {
-      setCosinePoints(points)
-    } else {
-      // In "both" mode, we need to generate both waves.
-      // First call produces sine points, then we generate cosine.
-      setSinePoints(points)
-    }
-  }, [points, waveMode])
-
-  // For "both" mode: after sine points are set, generate cosine
-  const bothPhaseRef = useRef<'idle' | 'sine-done'>('idle')
-
-  useEffect(() => {
-    if (waveMode === 'both' && sinePoints.length > 0 && bothPhaseRef.current === 'idle') {
-      bothPhaseRef.current = 'sine-done'
-      const internalFreq = frequency * 1000
-      generateCosine(amplitude, internalFreq, phase)
-    }
-  }, [waveMode, sinePoints, amplitude, frequency, phase, generateCosine])
-
-  useEffect(() => {
-    if (waveMode === 'both' && bothPhaseRef.current === 'sine-done' && points.length > 0) {
-      setCosinePoints(points)
-      bothPhaseRef.current = 'idle'
-    }
-  }, [waveMode, points])
-
-  // Trigger regeneration when parameters change
-  useEffect(() => {
-    if (!loading && !error) {
-      bothPhaseRef.current = 'idle'
-      regenerate()
-    }
-  }, [amplitude, frequency, phase, waveMode, samples, loading, error, regenerate])
+    // This single call handles all modes:
+    //   'sin'  → calls C++ generateSine(amplitude, internalFreq, phase)
+    //   'cos'  → calls C++ generateCosine(amplitude, internalFreq, phase)  
+    //   'both' → calls C++ generateSine then generateCosine, collecting both
+    generate(waveMode, amplitude, internalFreq, phase)
+  }, [amplitude, frequency, phase, waveMode, samples, loading, error, generate])
 
   // When samples slider changes, update the C++ engine sample count
   useEffect(() => {
@@ -194,17 +160,17 @@ export const ACSignalsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Parameter sliders — each one calls into C++ via useWaveEngine */}
+        {/* Parameter sliders — each one triggers C++ regeneration */}
         <div className="section-group">
           <div className="section-label">Parameters</div>
           <Slider
             label="Amplitude"
             value={amplitude}
             min={10}
-            max={200}
+            max={MAX_AMPLITUDE}
             step={1}
             onChange={setAmplitude}
-            formatValue={(v) => `${v}`}
+            formatValue={(v) => `${v}V`}
           />
           <Slider
             label="Frequency"
@@ -279,6 +245,7 @@ export const ACSignalsPage: React.FC = () => {
             amplitude={amplitude}
             frequency={frequency}
             phase={phase}
+            maxAmplitude={MAX_AMPLITUDE}
           />
         </div>
 
