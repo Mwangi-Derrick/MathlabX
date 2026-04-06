@@ -11,6 +11,7 @@
 # Precompiled Headers
 *.gch
 *.pch
+*CET_*mockup*
 
 # Linker files
 *.ilk
