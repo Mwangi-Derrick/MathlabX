@@ -1,5 +1,8 @@
 #ifndef SPATIAL_ENGINE_H
 #define SPATIAL_ENGINE_H
+#include <vector>
+#include <string>
+#include <cmath>
 
 
 // ─── Shared Data Structures ───────────────────────────────────────────────────
