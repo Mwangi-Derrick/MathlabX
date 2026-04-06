@@ -1,3 +1,9 @@
+#include "spatialEngine.h"
+#include "../math/vector_math.h"
+#include <cmath>
+#include <vector>
+#include <string>
+
 
 class DivergenceEngine2D : public SpatialFieldEngine2D {
 public:

@@ -1,4 +1,8 @@
 #include "spatialEngine.h"
+#include "vector_math.h"
+#include <cmath>
+#include <vector>
+#include <string>
 
 
 

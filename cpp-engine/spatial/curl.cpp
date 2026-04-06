@@ -1,4 +1,7 @@
-
+#include "spatialEngine.h"
+#include "../math/vector_math.h"
+#include <cmath>
+#include <vector>
 
 class CurlEngine2D : public SpatialFieldEngine2D {
 public:
