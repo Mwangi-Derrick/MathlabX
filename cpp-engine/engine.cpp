@@ -475,8 +475,55 @@ public:
         return divergence;
     }
 };
+//wait why not use the values retruned by the crossproductengine to compute the curl?
+//we could compute the curl by taking the cross product of the field's vector components with a fixed vector, and then we can use the values returned by the CrossProductFieldEngine to compute the curl. The curl can be approximated as:
+//curl ≈ (dVz/dy - dVy/dz, dVx/dz - dVz/dx, dVy/dx - dVx/dy)
+//where dVz/dy, dVy/dz, dVx/dz, dVz/dx, dVy/dx, and dVx/dy can be approximated using finite differences as:
+//dVz/dy ≈ (Vz[i+1].vz - Vz[i-1].vz) / (y[i+1] - y[i-1])
+//dVy/dz ≈ (Vy[i+1].vy - Vy[i-1].vy  ) / (z[i+1] - z[i-1])
+//dVx/dz ≈ (Vx[i+1].vx - Vx[i-1].vx) / (z[i+1] - z[i-1])
+//dVz/dx ≈ (Vz[i+1].vz - Vz[i-1].vz) / (x[i+1] - x[i-1])
+//dVy/dx ≈ (Vy[i+1].vy - Vy[i-1].vy) / (x[i+1] - x[i-1])
+//dVx/dy ≈ (Vx[i+1].vx - Vx[i-1].vx) / (y[i+1] - y[i-1])
+//we will reuse the end value the crossproduct engine to compute the curl, which will give us a new vector field that represents the rotational aspects of the original field in relation to the fixed vector. This allows us to visualize how the field is swirling or rotating around the fixed vector, providing insight into the dynamics of the field in a way that is not possible with just the original vector components alone.
+class CurlFieldEngine : public CrossProductFieldEngine {
+public:  std::vector<Point3D> computeCurl() const {
+        // Finite difference approximation
+        std::vector<Point3D> curl;
+        auto points = getFieldPoints();
+        for (size_t i = 1; i < points.size() - 1; ++i) {
+            //this is wrong, we need to compute the curl based on the vector components of the field, which involves taking the cross product of the field's vector components with a fixed vector. The curl can be approximated as:
+            //curl ≈ (dVz/dy - dVy/dz, dVx/dz - dVz/dx, dVy/dx - dVx/dy)
+            //where dVz/dy, dVy/dz, dVx/dz, dVz/dx, dVy/dx, and dVx/dy can be approximated 
+            //using finite differences as:
+            //dVz/dy ≈ (Vz[i+1].vz - Vz[i-1].vz) / (y[i+1] - y[i-1])
+            //dVy/dz ≈ (Vy[i+1].vy - Vy[i-1].vy  ) / (z[i+1] - z[i-1])
+            //dVx/dz ≈ (Vx[i+1].vx - Vx[i-1].vx) / (z[i+1] - z[i-1])
+            //dVz/dx ≈ (Vz[i+1].vz - Vz[i-1].vz) / (x[i+1] - x[i-1])
+            //dVy/dx ≈ (Vy[i+1].vy - Vy[i-1].vy) / (x[i+1] - x[i-1])
+            //dVx/dy ≈ (Vx[i+1].vx - Vx[i-1].vx) / (y[i+1] - y[i-1])
 
-
+            double dx = points[i+1].x - points[i-1].x;
+            double dy = points[i+1].y - points[i-1].y;
+            double dz = points[i+1].z - points[i-1].z;
+            
+            double dVy_dz = (points[i+1].vy - points[i-1].vy) / dz;
+            double dVz_dy = (points[i+1].vz - points[i-1].vz) / dy;
+            double dVz_dx = (points[i+1].vz - points[i-1].vz) / dx;
+            double dVx_dz = (points[i+1].vx - points[i-1].vx) / dz;
+            double dVx_dy = (points[i+1].vx - points[i-1].vx) / dy;
+            double dVy_dx = (points[i+1].vy - points[i-1].vy) / dx;
+            
+            curl.push_back({
+                dVz_dy - dVy_dz, // curl.x
+                dVx_dz - dVz_dx, // curl.y
+                dVy_dx - dVx_dy, // curl.z
+                0, 0, 0 // We can ignore the vector components for the curl result
+            });
+        }
+        return curl;
+    }
+};
 // ─── Emscripten Bindings ───
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
