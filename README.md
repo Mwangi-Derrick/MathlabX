@@ -20,10 +20,10 @@ Standard scalar execution in C++ relies on the ALU processing a single instructi
 * **The Compromise**: If we dropped precision to 32-bit `float` or `int`, we could theoretically process **8 data points per cycle**. However, for RLC Circuit phase angle derivations and Complex Vector Fields, `double` precision is non-negotiable for numerical stability. We accept the 4x throughput as the optimal engineering tradeoff.
 
 ### **2. Calculating Theoretical Peak GFLOPS**
-Using live hardware telemetry (monitoring `/proc/cpuinfo` for active $f_{clock}$), the engine can calculate its hardware efficiency ceiling:
-* **Base Frequency ($f_{clock}$)**: $2.40 - 2.50 \text{ GHz}$
-* **Physical Cores ($N_{cores}$)**: $2$ (We map to real silicon, ignoring Hyper-Threading ảo cores to avoid context-switching delays)
-* **SIMD Width ($W_{simd}$)**: $4$ (using 64-bit data in 256-bit registers)
+Using live hardware telemetry (monitoring `/proc/cpuinfo` for active `$f_{clock}$`), the engine can calculate its hardware efficiency ceiling:
+* **Base Frequency (`$f_{clock}$`)**: `$2.40 - 2.50 \text{ GHz}$`
+* **Physical Cores (`$N_{cores}$`)**: `$2$` (We map to real silicon, ignoring Hyper-Threading virtual cores to avoid context-switching delays)
+* **SIMD Width (`$W_{simd}$`)**: `$4$` (using 64-bit data in 256-bit registers)
 
 $$ \text{Peak SIMD Throughput} = f_{clock} \times N_{cores} \times W_{simd} $$
 $$ \text{Peak GFLOPS} = 2.5 \times 2 \times 4 = 20 \text{ GFLOPS} $$
