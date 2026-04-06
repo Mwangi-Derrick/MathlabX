@@ -30,6 +30,11 @@ struct Point2D {
     double y; // instantaneous value (Voltage or Current)
 };
 
+struct Point3D {
+    double x, y, z;
+    double vx, vy, vz; // The field vector at this point
+};
+
 /**
  * WaveEngine — The Parent Class
  * Handles basic waveform allocation and point storage.
