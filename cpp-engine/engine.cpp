@@ -409,6 +409,28 @@ public: DotProductFieldEngine(double start = 0.0, double end = 0.05, int numSamp
 };
 
 
+class CrossProductFieldEngine : public MultivariateFieldEngine {
+    // In a cross product field, we can compute the cross product of the vector components at each point with a fixed vector to create a new vector field that is perpendicular to both the original field and the fixed vector. This can be useful for visualizing rotational aspects of the field or for creating a new field that represents the curl of the original field in relation to the fixed vector. The cross product is computed as: 
+    // cross.x = vy * fixedVector.vz - vz * fixedVector.vy
+    // cross.y = vz * fixedVector.vx - vx * fixedVector.vz
+    // cross.z = vx * fixedVector.vy - vy * fixedVector.vx
+    // The resulting cross product vector at each point will be perpendicular to both the original field vector
+  
+public: CrossProductFieldEngine(double start = 0.0, double end = 0.05, int numSamples = 800) 
+        : MultivariateFieldEngine(start, end, numSamples) {}
+    std::vector<Point3D> computeCrossProduct(const Point3D& fixedVector) const {
+        std::vector<Point3D> crossProducts;
+        crossProducts.reserve(getFieldPoints().size());
+        for (const auto& point : getFieldPoints()) {
+            double crossX = point.vy * fixedVector.vz - point.vz * fixedVector.vy;
+            double crossY = point.vz * fixedVector.vx - point.vx * fixedVector.vz;
+            double crossZ = point.vx * fixedVector.vy - point.vy * fixedVector.vx;
+            crossProducts.push_back({crossX, crossY, crossZ, 0, 0, 0}); // We can ignore the vector
+        }
+        return crossProducts;
+    }
+};
+
 // ─── Emscripten Bindings ───
 EMSCRIPTEN_BINDINGS(wave_module) {
     emscripten::value_object<Point2D>("Point2D")
