@@ -45,7 +45,7 @@ Traditional EEE courses rely heavily on **paper calculations and static diagrams
 
 1.  Clone the repository:
 
-git clone https://github.com/your-username/MathLabX.git  
+git clone https://github.com/Mwangi-Derrick/MathLabX.git  
 cd MathLabX
 
 2.  Build the C++ Wasm engine:
