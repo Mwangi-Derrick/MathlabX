@@ -4,8 +4,14 @@
 #include <cmath>
 
 // Forward declarations
-struct GridPoint2D;
-struct GridPoint3D;
+struct GridPoint2D{
+    double x, y;
+    double fx, fy; // The field vector at this point
+};
+struct GridPoint3D{
+    double x, y, z;
+    double fx, fy, fz; // The field vector at this point
+};
 
 /* this is a vector mathematics namespace
 it is used for atomic math operations on individual points
