@@ -29,4 +29,18 @@ namespace VectorMath {
                (nY.fy - pY.fy) / (2.0 * dy) +
                (nZ.fz - pZ.fz) / (2.0 * dz);
     }
+
+    double curl3D(const GridPoint3D& pX, const GridPoint3D& nX,
+                         const GridPoint3D& pY, const GridPoint3D& nY,
+                         const GridPoint3D& pZ, const GridPoint3D& nZ,
+                         double dx, double dy, double dz) {
+                            
+        double curl_x = (nZ.fy - pZ.fy) / (2.0 * dy) -
+               (nY.fz - pY.fz) / (2.0 * dz);
+        double curl_y = (nZ.fx - pZ.fx) / (2.0 * dx) -
+               (nX.fz - pX.fz) / (2.0 * dz);
+        double curl_z = (nY.fx - pY.fx) / (2.0 * dx) -
+               (nX.fy - pX.fy) / (2.0 * dy);
+        return curl_x + curl_y + curl_z;
+    }
 }
