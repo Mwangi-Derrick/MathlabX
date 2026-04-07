@@ -52,9 +52,9 @@ export const EMFieldPage: React.FC = () => {
           <div className="wave-toggle">
             <ToggleButton label="Show Curl" isActive={showCurl} onClick={() => setShowCurl(!showCurl)} />
           </div>
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
-            Color indicates Curl Magnitude ($\nabla \times \mathbf { F }\$).
-          </p>
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
+          {`Color indicates Curl Magnitude ($\\nabla \\times \\mathbf{F}$).`}
+        </p>
         </div>
       </div>
 
