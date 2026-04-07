@@ -12,10 +12,15 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-
+  resolve: {
+    dedupe: ['react', 'react-dom']  // This ensures single React instance
+  },
   server: {
     port: 5173,
     open: true,
+    fs: {
+      strict: false // Allow loading WASM from the workspace root
+    },
     // Serve .wasm files with the correct MIME type
     headers: {
       'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -36,6 +41,6 @@ export default defineConfig({
   optimizeDeps: {
     // Don't pre-bundle the Emscripten-generated JS glue code.
     // It has special module patterns that Vite's optimizer can't handle.
-    exclude: ['./src/wasm/engine.mjs'],
+    exclude: ['../../../wasm/mathlab_x.mjs'],
   },
 })
