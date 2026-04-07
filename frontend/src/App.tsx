@@ -56,8 +56,14 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 export const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState('ac')
   const [uiMode, setUiMode] = useState<'basic' | 'advanced'>('basic')
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark')
   
   const CurrentComponent = modules.find((m) => m.id === activeModule)?.component || (() => null)
+
+  // Sync theme with body attribute so CSS works globally
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode)
+  }, [themeMode])
 
   return (
     <ErrorBoundary>
@@ -87,7 +93,14 @@ export const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button 
+              className="ui-toggle"
+              onClick={() => setThemeMode(m => m === 'dark' ? 'light' : 'dark')}
+              style={{ padding: '4px 10px' }}
+            >
+              {themeMode === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            </button>
             <button 
               className={`ui-toggle ${uiMode}`}
               onClick={() => setUiMode(m => m === 'basic' ? 'advanced' : 'basic')}
@@ -102,7 +115,7 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="main-content">
+        <div className="main-content" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           <CurrentComponent uiMode={uiMode} />
         </div>
       </div>
