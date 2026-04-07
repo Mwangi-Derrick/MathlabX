@@ -14,6 +14,12 @@ export interface Point2D {
   y: number
 }
 
+/** Complex number — maps to C++ Complex struct */
+export interface Complex {
+  real: number
+  imag: number
+}
+
 /**
  * Emscripten vector wrapper for std::vector<Point2D>.
  */
@@ -93,6 +99,16 @@ export interface ACCircuitEngineInstance extends WaveEngineInstance {
   getCurrentPoints(): Point2DVector
 }
 
+/**
+ * Instance of the C++ PhasorEngine class.
+ */
+export interface PhasorEngineInstance extends ACCircuitEngineInstance {
+  getVSourcePhasor(): Complex
+  getVRPhasor(res: number, l: number, c: number, vm: number, f: number): Complex
+  getVLPhasor(res: number, l: number, c: number, vm: number, f: number): Complex
+  getVCPhasor(res: number, l: number, c: number, vm: number, f: number): Complex
+}
+
 /** Instance of SpatialFieldEngine2D */
 export interface SpatialFieldEngine2DInstance {
   setPreset(name: string): void
@@ -116,6 +132,12 @@ export interface DivergenceEngine2DInstance extends SpatialFieldEngine2DInstance
 export interface CurlEngine2DInstance extends SpatialFieldEngine2DInstance {
   compute(): void
   computeCurl(): void
+}
+
+/** Instance of GradientEngine2D */
+export interface GradientEngine2DInstance extends SpatialFieldEngine2DInstance {
+  compute(): void
+  computeGradient(): void
 }
 
 /** Instance of SpatialFieldEngine3D */
@@ -150,13 +172,16 @@ export interface CurlEngine3DInstance extends SpatialFieldEngine3DInstance {
 export interface WaveEngineModule {
   WaveEngine: new (start: number, end: number, samples: number) => WaveEngineInstance
   ACCircuitEngine: new (start: number, end: number, samples: number) => ACCircuitEngineInstance
+  PhasorEngine: new (start: number, end: number, samples: number) => PhasorEngineInstance
   SpatialFieldEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => SpatialFieldEngine2DInstance
   DivergenceEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => DivergenceEngine2DInstance
   CurlEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => CurlEngine2DInstance
+  GradientEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => GradientEngine2DInstance
   SpatialFieldEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => SpatialFieldEngine3DInstance
   DivergenceEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => DivergenceEngine3DInstance
   CurlEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => CurlEngine3DInstance
 }
+
 
 /**
  * Factory function exported by engine.mjs
