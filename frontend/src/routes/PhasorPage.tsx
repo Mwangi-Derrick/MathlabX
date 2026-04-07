@@ -2,7 +2,7 @@
  * PhasorPage — Vector representation of RLC circuit voltages.
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { usePhasorEngine } from '../hooks/usePhasorEngine'
 import { PhasorCanvas } from '../components/PhasorCanvas'
 import { Slider } from '../components/Slider'
@@ -17,9 +17,9 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
   const [frequency, setFrequency] = useState(50)
   const [time, setTime] = useState(0)
   const [isAnimated, setIsAnimated] = useState(false)
-  const isAnimatedRef = React.useRef(isAnimated)
+  const isAnimatedRef = useRef(isAnimated)
   
-  React.useEffect(() => { isAnimatedRef.current = isAnimated }, [isAnimated])
+  useEffect(() => { isAnimatedRef.current = isAnimated }, [isAnimated])
 
   const { phasors, computePhasors, loading } = usePhasorEngine(0, 0.05, 800)
 
