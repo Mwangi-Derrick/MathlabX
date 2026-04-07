@@ -4,24 +4,29 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "dev": "bun --bun vite",
+    "build": "bun run tsc && bun --bun vite build",
+    "preview": "bun --bun vite preview",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules",
+    "setup": "bun install"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@react-three/fiber": "^8.15.12",
+    "@react-three/drei": "^9.92.7",
+    "three": "^0.183.2"
   },
   "devDependencies": {
-    "@react-three/drei": "^9.108.0",
-    "@react-three/fiber": "^9.5.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^4.2.1",
-    "three": "^0.183.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.8"
-  }
+  },
+  "trustedDependencies": [
+    "three"
+  ]
 }
