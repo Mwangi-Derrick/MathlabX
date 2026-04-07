@@ -16,6 +16,10 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
   const [amplitude, setAmplitude] = useState(100)
   const [frequency, setFrequency] = useState(50)
   const [time, setTime] = useState(0)
+  const [isAnimated, setIsAnimated] = useState(false)
+  const isAnimatedRef = React.useRef(isAnimated)
+  
+  React.useEffect(() => { isAnimatedRef.current = isAnimated }, [isAnimated])
 
   const { phasors, computePhasors, loading } = usePhasorEngine(0, 0.05, 800)
 
@@ -23,7 +27,11 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
   useEffect(() => {
     let frame: number
     const tick = (t: number) => {
-      setTime(t / 1000) // Convert ms to s
+      if (isAnimatedRef.current) {
+        setTime(t / 1000) // Convert ms to s
+      } else {
+        setTime(0) // Stationary reference frame
+      }
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
@@ -97,6 +105,15 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
 
         <div className="advanced-only">
           <div className="section-label">Vector Analysis</div>
+          <div className="section-group" style={{ marginBottom: '10px' }}>
+            <button 
+              className={`ui-toggle ${isAnimated ? 'advanced' : ''}`}
+              onClick={() => setIsAnimated(!isAnimated)}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              {isAnimated ? '⏸️ Stop Rotation' : '▶️ Animate Rotation'}
+            </button>
+          </div>
           {phasors && (
             <>
               <MetricCard label="Phase Angle φ" value={(phasors.phi * 180 / Math.PI).toFixed(1)} unit="°" />

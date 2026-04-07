@@ -28,31 +28,19 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     const omega = 2 * Math.PI * freq
 
     ctx.clearRect(0, 0, W, H)
-    ctx.fillStyle = '#020617'
+    // Dark mode fallback just in case, CSS should handle it
+    ctx.fillStyle = '#1a1e35ff'
     ctx.fillRect(0, 0, W, H)
 
-    // Cinematic Grid
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)'
+    // Center Crosshairs only
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.moveTo(0, cy)
-    ctx.lineTo(W, cy)
-    ctx.moveTo(cx, 0)
-    ctx.lineTo(cx, H)
+    ctx.moveTo(cx - 10, cy)
+    ctx.lineTo(cx + 10, cy)
+    ctx.moveTo(cx, cy - 10)
+    ctx.lineTo(cx, cy + 10)
     ctx.stroke()
-
-    // Polar Concentric Rings
-    ctx.setLineDash([5, 5])
-    for (let r = 0.25; r <= 1.0; r += 0.25) {
-      ctx.beginPath()
-      ctx.arc(cx, cy, r * (W / 2 - 50), 0, Math.PI * 2)
-      ctx.stroke()
-      
-      ctx.fillStyle = 'rgba(255,255,255,0.1)'
-      ctx.font = '10px Inter'
-      ctx.fillText(`${(r * maxVal).toFixed(0)}V`, cx + r * (W / 2 - 50) + 5, cy - 5)
-    }
-    ctx.setLineDash([])
 
     const drawPhasor = (c: Complex, color: string, label: string, isBold = false) => {
       // Rotate by omega * t
@@ -108,9 +96,11 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
 
     // Draw reference circle path for clarity
     ctx.beginPath()
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)'
+    ctx.setLineDash([2, 5])
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'
     ctx.arc(cx, cy, Math.sqrt(vs.real**2 + vs.imag**2) * scale, 0, Math.PI * 2)
     ctx.stroke()
+    ctx.setLineDash([])
 
     drawPhasor(vs, '#ffffff', 'Vs', true) // Reference
     drawPhasor(vr, '#3b82f6', 'VR')       // Blue
