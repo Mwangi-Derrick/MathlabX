@@ -48,9 +48,9 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
         <div className='section-group'>
          <div className='section-label'>Resolution</div>
          <div className='section-content'>
-          <Slider label="Res X" value={resX} min={0} max={30} step={1} onChange={setResX} />
-          <Slider label="Res Y" value={resY} min={0} max={30} step={1} onChange={setResY} />
-          <Slider label="Res Z" value={resZ} min={0} max={30} step={1} onChange={setResZ} />
+          <Slider label="Res X" value={resX} min={0} max={50} step={1} onChange={setResX} />
+          <Slider label="Res Y" value={resY} min={0} max={50} step={1} onChange={setResY} />
+          <Slider label="Res Z" value={resZ} min={0} max={50} step={1} onChange={setResZ} />
          </div>
         </div>
 
