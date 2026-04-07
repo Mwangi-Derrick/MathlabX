@@ -5,12 +5,14 @@
 import React, { useState } from 'react'
 import { ACSignalsPage } from './routes/ACSignalsPage'
 import { EMFieldPage } from './routes/EMFieldPage'
+import { PhasorPage } from './routes/PhasorPage'
+import { VectorCalcPage } from './routes/VectorCalcPage'
 
 const modules = [
   { id: 'ac', label: 'AC Signals', component: ACSignalsPage },
-  { id: 'phasor', label: 'Phasor', component: () => <div className="placeholder-module">Phasor Module — Coming Soon</div> },
+  { id: 'phasor', label: 'Phasor', component: PhasorPage },
   { id: 'field', label: 'EM Field', component: EMFieldPage },
-  { id: 'vec', label: 'Vector Calc', component: () => <div className="placeholder-module">Vector Calc Module — Coming Soon</div> },
+  { id: 'vec', label: 'Vector Calc', component: VectorCalcPage },
 ]
 
 interface ErrorBoundaryState {
