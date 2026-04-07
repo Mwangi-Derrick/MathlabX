@@ -7,10 +7,11 @@ import { useACCircuit } from '../hooks/useACCircuit'
 import { WaveCanvas } from '../components/WaveCanvas'
 import { Slider } from '../components/Slider'
 import { MetricCard } from '../components/MetricCard'
+import { PageProps } from '../App'
 
 const MAX_AMPLITUDE = 200
 
-export const ACSignalsPage: React.FC = () => {
+export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
   const {
     voltagePoints,
     currentPoints,
@@ -108,24 +109,32 @@ export const ACSignalsPage: React.FC = () => {
             <span className="stat-key">φ</span>
             <span className="stat-value">{(metrics.phaseAngle * 180 / Math.PI).toFixed(1)}°</span>
           </div>
-          <div className="status-bar-engine">engine.wasm · RLC Active</div>
+          <div className="status-bar-engine">engine.wasm · {uiMode.toUpperCase()} · RLC Active</div>
         </div>
       </div>
 
       {/* ─── Right Panel ───────────────────────────────────────────────── */}
       <div className="sidebar-right">
-        <div className="section-label">Impedance</div>
-        <MetricCard label="Z (Total)" value={metrics.impedance.toFixed(1)} unit="Ω" />
-        <MetricCard label="XL" value={metrics.inductiveReactance.toFixed(1)} unit="Ω" />
-        <MetricCard label="XC" value={metrics.capacitiveReactance.toFixed(1)} unit="Ω" />
-        
-        <div className="divider" />
-        
-        <div className="section-label">Power</div>
-        <MetricCard label="P (Active)" value={metrics.realPower.toFixed(1)} unit="W" />
-        <MetricCard label="Q (Reactive)" value={metrics.reactivePower.toFixed(1)} unit="VAR" />
-        <MetricCard label="S (Apparent)" value={metrics.apparentPower.toFixed(1)} unit="VA" />
-        <MetricCard label="Power Factor" value={metrics.powerFactor.toFixed(3)} unit="" />
+        <div className="basic-only">
+          <div className="section-label">Quick Stats</div>
+          <MetricCard label="Signal Status" value={metrics.powerFactor > 0.8 ? "High Efficiency" : "Inductive Load"} unit="" />
+          <MetricCard label="Peak Power" value={metrics.apparentPower.toFixed(0)} unit="VA" />
+        </div>
+
+        <div className="advanced-only">
+          <div className="section-label">Impedance</div>
+          <MetricCard label="Z (Total)" value={metrics.impedance.toFixed(1)} unit="Ω" />
+          <MetricCard label="XL" value={metrics.inductiveReactance.toFixed(1)} unit="Ω" />
+          <MetricCard label="XC" value={metrics.capacitiveReactance.toFixed(1)} unit="Ω" />
+          
+          <div className="divider" />
+          
+          <div className="section-label">Power Analysis</div>
+          <MetricCard label="P (Active)" value={metrics.realPower.toFixed(1)} unit="W" />
+          <MetricCard label="Q (Reactive)" value={metrics.reactivePower.toFixed(1)} unit="VAR" />
+          <MetricCard label="S (Apparent)" value={metrics.apparentPower.toFixed(1)} unit="VA" />
+          <MetricCard label="Power Factor" value={metrics.powerFactor.toFixed(3)} unit="" />
+        </div>
       </div>
     </div>
   )

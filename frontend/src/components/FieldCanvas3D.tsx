@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Grid } from '@react-three/drei'
+import { OrbitControls, Grid, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import type { GridPoint3D } from '../lib/types'
 
@@ -9,39 +9,81 @@ interface FieldCanvas3DProps {
   showCurl?: boolean
 }
 
-const VectorArrow: React.FC<{ point: GridPoint3D; showCurl?: boolean }> = ({ point, showCurl }) => {
-  const direction = useMemo(() => new THREE.Vector3(point.fx, point.fy, point.fz).normalize(), [point.fx, point.fy, point.fz])
-  const origin = useMemo(() => new THREE.Vector3(point.x, point.y, point.z), [point.x, point.y, point.z])
-  const length = useMemo(() => Math.sqrt(point.fx ** 2 + point.fy ** 2 + point.fz ** 2) * 0.5, [point.fx, point.fy, point.fz])
+const InstancedVectors: React.FC<{ grid: GridPoint3D[]; showCurl?: boolean }> = ({ grid, showCurl }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+  const count = grid?.length || 0
   
-  // Color based on curl intensity if showCurl is true
-  const color = useMemo(() => {
-    if (showCurl) {
-      const curlMag = Math.sqrt(point.curl_x ** 2 + point.curl_y ** 2 + point.curl_z ** 2)
-      return new THREE.Color().setHSL(0.6 - Math.min(curlMag, 1) * 0.6, 1, 0.5)
-    }
-    return new THREE.Color(0x2563eb)
-  }, [point.curl_x, point.curl_y, point.curl_z, showCurl])
+  const arrowGeometry = useMemo(() => {
+    const geo = new THREE.ConeGeometry(0.12, 0.45, 8)
+    geo.translate(0, 0.22, 0)
+    geo.rotateX(Math.PI / 2)
+    return geo
+  }, [])
+
+  const tempObject = useMemo(() => new THREE.Object3D(), [])
+  const tempColor = useMemo(() => new THREE.Color(), [])
+
+  useEffect(() => {
+    if (!meshRef.current || count === 0) return
+
+    grid.forEach((point, i) => {
+      const pos = new THREE.Vector3(point.x, point.y, point.z)
+      const dir = new THREE.Vector3(point.fx, point.fy, point.fz)
+      const length = dir.length()
+      
+      tempObject.position.copy(pos)
+      if (length > 0.01) {
+        tempObject.lookAt(pos.clone().add(dir))
+        tempObject.scale.set(1.2, 1.2, length * 0.6)
+      } else {
+        tempObject.scale.set(0, 0, 0)
+      }
+      
+      tempObject.updateMatrix()
+      meshRef.current!.setMatrixAt(i, tempObject.matrix)
+
+      if (showCurl) {
+        const curlMag = Math.sqrt(point.curl_x ** 2 + point.curl_y ** 2 + point.curl_z ** 2)
+        const hue = 0.6 - Math.min(curlMag * 0.4, 0.6)
+        tempColor.setHSL(hue, 1, 0.55)
+      } else {
+        tempColor.set(0x3b82f6)
+      }
+      meshRef.current!.setColorAt(i, tempColor)
+    })
+
+    meshRef.current.instanceMatrix.needsUpdate = true
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true
+  }, [grid, showCurl, tempObject, tempColor, count])
+
+  if (count === 0) return null
 
   return (
-    <primitive object={new THREE.ArrowHelper(direction, origin, length, color.getHex(), 0.1, 0.05)} />
+    <instancedMesh ref={meshRef} args={[arrowGeometry, undefined, count]}>
+      <meshStandardMaterial emissiveIntensity={1.5} toneMapped={false} />
+    </instancedMesh>
   )
 }
 
 export const FieldCanvas3D: React.FC<FieldCanvas3DProps> = ({ grid, showCurl }) => {
   return (
-    <div style={{ width: '100%', height: '100%', background: '#0f172a' }}>
-      <Canvas camera={{ position: [10, 10, 10], fov: 50 }}>
-        <color attach="background" args={['#0f172a']} />
+    <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '12px', overflow: 'hidden' }}>
+      <Canvas camera={{ position: [10, 10, 10], fov: 35 }}>
+        <color attach="background" args={['#020617']} />
+        
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+
+        <Grid 
+          infiniteGrid 
+          fadeDistance={30} 
+          sectionSize={1} 
+          sectionColor="#1e293b" 
+          cellSize={0.5}
+          cellColor="#0f172a"
+        />
         
-        <Grid infiniteGrid fadeDistance={50} sectionSize={5} />
-        <axesHelper args={[5]} />
-        
-        {grid.map((p, i) => (
-          <VectorArrow key={i} point={p} showCurl={showCurl} />
-        ))}
+        <InstancedVectors grid={grid} showCurl={showCurl} />
         
         <OrbitControls makeDefault />
       </Canvas>

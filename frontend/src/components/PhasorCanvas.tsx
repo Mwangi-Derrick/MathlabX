@@ -7,9 +7,11 @@ interface PhasorCanvasProps {
   vl: Complex
   vc: Complex
   maxVal: number
+  time: number
+  freq: number
 }
 
-export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxVal }) => {
+export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxVal, time, freq }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -18,18 +20,20 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const W = canvas.width = 400
-    const H = canvas.height = 400
+    const W = canvas.width = 450
+    const H = canvas.height = 450
     const cx = W / 2
     const cy = H / 2
-    const scale = (W / 2 - 40) / maxVal
+    const scale = (W / 2 - 50) / maxVal
+    const omega = 2 * Math.PI * freq
 
     ctx.clearRect(0, 0, W, H)
-    ctx.fillStyle = '#0f172a'
+    ctx.fillStyle = '#020617'
     ctx.fillRect(0, 0, W, H)
 
-    // Axes
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)'
+    // Cinematic Grid
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)'
+    ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(0, cy)
     ctx.lineTo(W, cy)
@@ -37,50 +41,85 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     ctx.lineTo(cx, H)
     ctx.stroke()
 
-    // Polar Grid
-    ctx.setLineDash([2, 4])
-    for (let r = 0.2; r <= 1.0; r += 0.2) {
+    // Polar Concentric Rings
+    ctx.setLineDash([5, 5])
+    for (let r = 0.25; r <= 1.0; r += 0.25) {
       ctx.beginPath()
-      ctx.arc(cx, cy, r * (W / 2 - 40), 0, Math.PI * 2)
+      ctx.arc(cx, cy, r * (W / 2 - 50), 0, Math.PI * 2)
       ctx.stroke()
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.1)'
+      ctx.font = '10px Inter'
+      ctx.fillText(`${(r * maxVal).toFixed(0)}V`, cx + r * (W / 2 - 50) + 5, cy - 5)
     }
     ctx.setLineDash([])
 
-    const drawVector = (c: Complex, color: string, label: string) => {
-      const tx = cx + c.real * scale
-      const ty = cy - c.imag * scale // -y because canvas y is down
+    const drawPhasor = (c: Complex, color: string, label: string, isBold = false) => {
+      // Rotate by omega * t
+      const angleOffset = omega * time
+      const cosT = Math.cos(angleOffset)
+      const sinT = Math.sin(angleOffset)
+      
+      // Complex multiplication: (R + iI) * (cosT + iSinT)
+      const rotatedReal = c.real * cosT - c.imag * sinT
+      const rotatedImag = c.real * sinT + c.imag * cosT
 
+      const tx = cx + rotatedReal * scale
+      const ty = cy - rotatedImag * scale 
+
+      ctx.save()
+      
+      // Neon Glow
+      ctx.shadowColor = color
+      ctx.shadowBlur = isBold ? 15 : 8
       ctx.strokeStyle = color
-      ctx.lineWidth = 3
+      ctx.lineWidth = isBold ? 4 : 2
+      
       ctx.beginPath()
       ctx.moveTo(cx, cy)
       ctx.lineTo(tx, ty)
       ctx.stroke()
 
       // Arrowhead
-      const angle = Math.atan2(ty - cy, tx - cx)
+      const headAngle = Math.atan2(ty - cy, tx - cx)
       ctx.beginPath()
       ctx.moveTo(tx, ty)
-      ctx.lineTo(tx - 10 * Math.cos(angle - 0.5), ty - 10 * Math.sin(angle - 0.5))
-      ctx.lineTo(tx - 10 * Math.cos(angle + 0.5), ty - 10 * Math.sin(angle + 0.5))
+      ctx.lineTo(tx - 12 * Math.cos(headAngle - 0.4), ty - 12 * Math.sin(headAngle - 0.4))
+      ctx.lineTo(tx - 12 * Math.cos(headAngle + 0.4), ty - 12 * Math.sin(headAngle + 0.4))
       ctx.closePath()
       ctx.fillStyle = color
       ctx.fill()
 
-      // Label
-      ctx.fillStyle = 'white'
-      ctx.font = '12px bold'
-      ctx.fillText(label, tx + 5, ty - 5)
+      // Label with Background for legibility
+      const labelX = tx + 10 * Math.cos(headAngle)
+      const labelY = ty + 10 * Math.sin(headAngle)
+      
+      ctx.shadowBlur = 0
+      ctx.font = '12px "JetBrains Mono", monospace'
+      const textWidth = ctx.measureText(label).width
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'
+      ctx.fillRect(labelX - 2, labelY - 10, textWidth + 4, 14)
+      
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(label, labelX, labelY + 1)
+      
+      ctx.restore()
     }
 
-    drawVector(vs, '#ffffff', 'Vs') // Reference
-    drawVector(vr, '#2563eb', 'VR') // Blue
-    drawVector(vl, '#eab308', 'VL') // Yellow
-    drawVector(vc, '#16a34a', 'VC') // Green
+    // Draw reference circle path for clarity
+    ctx.beginPath()
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)'
+    ctx.arc(cx, cy, Math.sqrt(vs.real**2 + vs.imag**2) * scale, 0, Math.PI * 2)
+    ctx.stroke()
 
-    // Total Vector (VR + VL + VC)
+    drawPhasor(vs, '#ffffff', 'Vs', true) // Reference
+    drawPhasor(vr, '#3b82f6', 'VR')       // Blue
+    drawPhasor(vl, '#f59e0b', 'VL')       // Amber
+    drawPhasor(vc, '#10b981', 'VC')       // Emerald
+
+    // Sum Vector
     const total = { real: vr.real + vl.real + vc.real, imag: vr.imag + vl.imag + vc.imag }
-    drawVector(total, '#ef4444', 'ΣV') // Red dashed for sum
+    drawPhasor(total, '#ef4444', 'ΣV')    // Red
 
   }, [vs, vr, vl, vc, maxVal])
 

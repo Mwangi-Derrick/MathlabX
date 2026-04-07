@@ -198,15 +198,39 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
 
       const scaleX = (W - 50) / Math.max(points.length - 1, 1)
 
+      // 1. Draw the gradient area under the curve
+      ctx.beginPath()
+      const areaGradient = ctx.createLinearGradient(0, cy - maxAmplitude * scaleY, 0, cy + maxAmplitude * scaleY)
+      areaGradient.addColorStop(0, `${color}00`) // Transparent
+      areaGradient.addColorStop(0.5, `${color}22`) // Subtle glow middle
+      areaGradient.addColorStop(1, `${color}00`) // Transparent
+
+      ctx.fillStyle = areaGradient
+      points.forEach((point, i) => {
+        const px = cx + i * scaleX
+        const py = cy - point.y * scaleY
+        if (i === 0) ctx.moveTo(px, py)
+        else ctx.lineTo(px, py)
+      })
+      // Close the path to the center line for filling
+      ctx.lineTo(cx + (points.length - 1) * scaleX, cy)
+      ctx.lineTo(cx, cy)
+      ctx.fill()
+
+      // 2. Draw the actual glowing stroke
       ctx.beginPath()
       ctx.strokeStyle = color
-      ctx.lineWidth = 2
+      ctx.lineWidth = 3
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
       ctx.globalAlpha = alpha
+      
+      // Intense neon glow
+      ctx.shadowColor = color
+      ctx.shadowBlur = 15
 
       points.forEach((point, i) => {
         const px = cx + i * scaleX
-        // point.y comes directly from C++: amplitude * sin(freq * x + phase)
-        // We scale it against the FIXED max amplitude, not the data's actual peak
         const py = cy - point.y * scaleY
         if (i === 0) {
           ctx.moveTo(px, py)
@@ -215,9 +239,12 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
         }
       })
       ctx.stroke()
+      
+      // Reset shadows for other elements
+      ctx.shadowBlur = 0
       ctx.globalAlpha = 1
 
-      // Tracking dot — animated position based on current time
+      // 3. Tracking dot — animated position based on current time
       const midIdx = Math.floor(points.length / 2)
       if (midIdx < points.length) {
         const dotX = cx + midIdx * scaleX
@@ -227,20 +254,41 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
           : amplitude * Math.cos(omega * time + phase)
         const dotY = cy - dotVal * scaleY
 
-        // Glow effect around the tracking dot
+        // Multi-layered glow for the dot
         ctx.shadowColor = color
-        ctx.shadowBlur = 10
+        ctx.shadowBlur = 25
+        
+        // Trailing "Particle" Effect
+        for (let j = 1; j <= 8; j++) {
+          const trailIdx = midIdx - j * 2
+          if (trailIdx >= 0) {
+            const tx = cx + trailIdx * scaleX
+            const tVal = color === SINE_COLOR
+              ? amplitude * Math.sin(omega * (time - j * 0.005) + phase)
+              : amplitude * Math.cos(omega * (time - j * 0.005) + phase)
+            const ty = cy - tVal * scaleY
+            
+            ctx.globalAlpha = 1 - (j / 8)
+            ctx.beginPath()
+            ctx.arc(tx, ty, 4 - (j / 2), 0, Math.PI * 2)
+            ctx.fillStyle = color
+            ctx.fill()
+          }
+        }
+        ctx.globalAlpha = 1
+
         ctx.beginPath()
-        ctx.arc(dotX, dotY, 5, 0, Math.PI * 2)
+        ctx.arc(dotX, dotY, 6, 0, Math.PI * 2)
         ctx.fillStyle = color
         ctx.fill()
 
-        // White center for visibility
-        ctx.shadowBlur = 0
+        ctx.shadowBlur = 10
         ctx.beginPath()
-        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2)
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2)
         ctx.fillStyle = '#ffffff'
         ctx.fill()
+        
+        ctx.shadowBlur = 0
       }
     }
 

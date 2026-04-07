@@ -8,7 +8,11 @@ import { EMFieldPage } from './routes/EMFieldPage'
 import { PhasorPage } from './routes/PhasorPage'
 import { VectorCalcPage } from './routes/VectorCalcPage'
 
-const modules = [
+export interface PageProps {
+  uiMode: 'basic' | 'advanced'
+}
+
+const modules: { id: string; label: string; component: React.FC<PageProps> }[] = [
   { id: 'ac', label: 'AC Signals', component: ACSignalsPage },
   { id: 'phasor', label: 'Phasor', component: PhasorPage },
   { id: 'field', label: 'EM Field', component: EMFieldPage },
@@ -51,11 +55,13 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 
 export const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState('ac')
+  const [uiMode, setUiMode] = useState<'basic' | 'advanced'>('basic')
+  
   const CurrentComponent = modules.find((m) => m.id === activeModule)?.component || (() => null)
 
   return (
     <ErrorBoundary>
-      <div className="app-shell">
+      <div className={`app-shell ui-${uiMode}`}>
         <div className="topbar">
           <div className="logo">
             <div className="logo-mark">
@@ -81,13 +87,24 @@ export const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="status-indicator">
-            <div className="status-dot" />
-            <span className="status-text">Wasm Kernel Active</span>
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <button 
+              className={`ui-toggle ${uiMode}`}
+              onClick={() => setUiMode(m => m === 'basic' ? 'advanced' : 'basic')}
+            >
+              {uiMode === 'basic' ? '✨ Simple Mode' : '🛠️ Advanced Mode'}
+            </button>
+            
+            <div className="status-indicator">
+              <div className="status-dot" />
+              <span className="status-text">Wasm Kernel Active</span>
+            </div>
           </div>
         </div>
 
-        <CurrentComponent />
+        <div className="main-content">
+          <CurrentComponent uiMode={uiMode} />
+        </div>
       </div>
     </ErrorBoundary>
   )

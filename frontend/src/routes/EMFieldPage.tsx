@@ -1,14 +1,12 @@
-/**
- * EMFieldPage — EM Field visualization in 3D.
- */
-
 import React, { useState, useEffect } from 'react'
 import { useSpatialEngine3D } from '../hooks/useSpatialEngine'
 import { FieldCanvas3D } from '../components/FieldCanvas3D'
 import { Slider } from '../components/Slider'
 import { ToggleButton } from '../components/ToggleButton'
+import { MetricCard } from '../components/MetricCard'
+import { PageProps } from '../App'
 
-export const EMFieldPage: React.FC = () => {
+export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
   const [preset, setPreset] = useState('swirl')
   const [showCurl, setShowCurl] = useState(true)
   const [ax, setAx] = useState(1.0)
@@ -23,7 +21,14 @@ export const EMFieldPage: React.FC = () => {
     }
   }, [preset, ax, ay, az, loading, compute])
 
-  if (loading) return <div>Initializing 3D Spatial Engine...</div>
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loader" />
+        <p>Initializing 3D Spatial Kernel...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="main-layout">
@@ -49,15 +54,16 @@ export const EMFieldPage: React.FC = () => {
           <div className="wave-toggle">
             <ToggleButton label="Show Curl" isActive={showCurl} onClick={() => setShowCurl(!showCurl)} />
           </div>
-        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
-          {`Color indicates Curl Magnitude ($\\nabla \\times \\mathbf{F}$).`}
-        </p>
         </div>
       </div>
 
       <div className="canvas-area">
         <div className="canvas-container">
-          <FieldCanvas3D grid={grid} showCurl={showCurl} />
+          {grid && grid.length > 0 ? (
+            <FieldCanvas3D grid={grid} showCurl={showCurl} />
+          ) : (
+            <div className="status-message">Computing Field Gradients...</div>
+          )}
         </div>
         <div className="status-bar">
           <div className="status-bar-engine">Three.js + WASM Spatial Kernel</div>
@@ -65,23 +71,22 @@ export const EMFieldPage: React.FC = () => {
       </div>
 
       <div className="sidebar-right">
-        <div className="section-label">Theory: Curl</div>
-        <div className="formula-box">
-          ∇ × F = (∂Fz/∂y - ∂Fy/∂z)i + ...
+        <div className={uiMode === 'basic' ? 'ui-visible' : 'ui-hidden'}>
+          <div className="section-label">Summary</div>
+          <MetricCard label="Visual Mode" value="Interactive 3D" />
+          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
+            Real-time vector field visualization using C++ compute.
+          </p>
         </div>
-        <p style={{ fontSize: '11px', lineHeight: '1.4' }}>
-          Curl measures the "rotation" of a vector field. In EM, this is critical for Faraday's Law and Ampere's Law.
-        </p>
-        
-        <div className="divider" />
-        
-        <div className="section-label">C++ Backend</div>
-        <div className="code-preview" style={{ fontSize: '10px' }}>
-          void computeCurl() {'{'}<br />
-          &nbsp;&nbsp;grid[idx].curl_x = dFz_dy - dFy_dz;<br />
-          &nbsp;&nbsp;grid[idx].curl_y = dFx_dz - dFz_dx;<br />
-          &nbsp;&nbsp;grid[idx].curl_z = dFy_dx - dFx_dy;<br />
-          {'}'}
+
+        <div className={uiMode === 'advanced' ? 'ui-visible' : 'ui-hidden'}>
+          <div className="section-label">Theory: Curl</div>
+          <div className="formula-box">
+            ∇ × F = (∂Fz/∂y - ∂Fy/∂z)i + ...
+          </div>
+          <p style={{ fontSize: '11px', lineHeight: '1.4' }}>
+            Adjust parameters to see how curl relates to field rotation.
+          </p>
         </div>
       </div>
     </div>

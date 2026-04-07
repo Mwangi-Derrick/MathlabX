@@ -7,8 +7,10 @@ import { useVectorCalc2D } from '../hooks/useVectorCalc'
 import { VectorFieldCanvas2D } from '../components/VectorFieldCanvas2D'
 import { Slider } from '../components/Slider'
 import { ToggleButton } from '../components/ToggleButton'
+import { MetricCard } from '../components/MetricCard'
+import { PageProps } from '../App'
 
-export const VectorCalcPage: React.FC = () => {
+export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
   const [opType, setOpType] = useState<'div' | 'curl' | 'grad'>('div')
   const [preset, setPreset] = useState('radial')
   const [ax, setAx] = useState(1.0)
@@ -62,20 +64,27 @@ export const VectorCalcPage: React.FC = () => {
       </div>
 
       <div className="sidebar-right">
-        <div className="section-label">Calculus Reference</div>
-        <div className="formula-box" style={{ fontSize: '12px' }}>
-          {opType === 'div' && '∇·F = ∂Fx/∂x + ∂Fy/∂y'}
-          {opType === 'curl' && '(∇×F)z = ∂Fy/∂x - ∂Fx/∂y'}
-          {opType === 'grad' && '∇V = (∂V/∂x)i + (∂V/∂y)j'}
+        <div className="basic-only">
+          <div className="section-label">Field Status</div>
+          <MetricCard label="Complexity" value={uiMode === 'basic' ? "High" : "Calculated"} unit="" />
         </div>
-        
-        <div className="divider" />
-        <div className="section-label">Insight</div>
-        <p style={{ fontSize: '11px', lineHeight: '1.4' }}>
-          {opType === 'div' && 'Red arrows indicate Source (+div), Green indicate Sink (-div).'}
-          {opType === 'curl' && 'Orange indicates CW rotation, Purple indicates CCW rotation.'}
-          {opType === 'grad' && 'Vectors point in direction of steepest increase.'}
-        </p>
+
+        <div className="advanced-only">
+          <div className="section-label">Calculus Reference</div>
+          <div className="formula-box" style={{ fontSize: '10px' }}>
+            {opType === 'div' && '∇·F = ∂Fx/∂x + ∂Fy/∂y'}
+            {opType === 'curl' && '(∇×F)z = ∂Fy/∂x - ∂Fx/∂y'}
+            {opType === 'grad' && '∇V = (∂V/∂x)i + (∂V/∂y)j'}
+          </div>
+          
+          <div className="divider" />
+          <div className="section-label">Insight</div>
+          <p style={{ fontSize: '11px', lineHeight: '1.4', color: 'var(--text-secondary)' }}>
+            {opType === 'div' && 'Red arrows indicate Source (+div), Green indicate Sink (-div).'}
+            {opType === 'curl' && 'Orange indicates CW rotation, Purple indicates CCW rotation.'}
+            {opType === 'grad' && 'Vectors point in direction of steepest increase.'}
+          </p>
+        </div>
       </div>
     </div>
   )
