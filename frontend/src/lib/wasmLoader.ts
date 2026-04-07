@@ -10,8 +10,10 @@ import type {
   ACCircuitEngineInstance,
   DivergenceEngine2DInstance,
   CurlEngine2DInstance,
+  GradientEngine2DInstance,
   DivergenceEngine3DInstance,
-  CurlEngine3DInstance
+  CurlEngine3DInstance,
+  PhasorEngineInstance
 } from './types'
 
 // @ts-ignore — Emscripten-generated file, no TS source
@@ -65,6 +67,14 @@ export async function createACCircuitEngine(
   return new module.ACCircuitEngine(start, end, samples)
 }
 
+/** Factory for PhasorEngine */
+export async function createPhasorEngine(
+  start: number, end: number, samples: number
+): Promise<PhasorEngineInstance> {
+  const module = await loadWasmModule()
+  return new module.PhasorEngine(start, end, samples)
+}
+
 /** Factory for DivergenceEngine2D */
 export async function createDivergenceEngine2D(
   rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
@@ -80,6 +90,15 @@ export async function createCurlEngine2D(
   const module = await loadWasmModule()
   return new module.CurlEngine2D(rx, ry, xmin, xmax, ymin, ymax)
 }
+
+/** Factory for GradientEngine2D */
+export async function createGradientEngine2D(
+  rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
+): Promise<GradientEngine2DInstance> {
+  const module = await loadWasmModule()
+  return new module.GradientEngine2D(rx, ry, xmin, xmax, ymin, ymax)
+}
+
 
 /** Factory for DivergenceEngine3D */
 export async function createDivergenceEngine3D(
