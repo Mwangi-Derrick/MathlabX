@@ -16,7 +16,7 @@ interface WaveEngineState {
   /** Cosine wave points (populated in 'cos' and 'both' modes) */
   cosinePoints: Point2D[]
   /** Generate waveform(s) for the given mode — all params go to C++ */
-  generate: (mode: WaveMode, amplitude: number, frequency: number, phase: number) => void
+  generate: (mode: WaveMode, amplitude: number, frequency: number) => void
   /** Update the sample count on the engine — goes to C++ setSamples() */
   setSamples: (samples: number) => void
 }
@@ -98,7 +98,7 @@ export function useWaveEngine(): WaveEngineState {
   // ─── Unified generate function ────────────────────────────────────────
 
   const generate = useCallback(
-    (mode: WaveMode, amplitude: number, frequency: number, phase: number) => {
+    (mode: WaveMode, amplitude: number, frequency: number) => {
       const engine = engineRef.current
       if (!engine) return
 
