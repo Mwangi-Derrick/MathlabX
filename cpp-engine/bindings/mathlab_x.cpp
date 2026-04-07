@@ -22,11 +22,14 @@
 #include <cmath>
 #include <emscripten/bind.h>
 #include "../math/vector_math.h"
+#include "../math/complex_math.h"
 #include "../time_domain/ACCircuitEngine.h"
+#include "../time_domain/PhasorEngine.h"
 #include "../time_domain/WaveEngine.h"
 #include "../spatial/spatialEngine.h"
 #include "../spatial/divergence.h"
 #include "../spatial/curl.h"
+#include "../spatial/gradient.h"
 #include "../checkHardware.h"
 
 /**
@@ -87,6 +90,10 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
 
     emscripten::register_vector<Point2D>("Point2DVector");
 
+    emscripten::value_object<Complex>("Complex")
+        .field("real", &Complex::real)
+        .field("imag", &Complex::imag);
+
     emscripten::class_<WaveEngine>("WaveEngine")
         .function("setSamples", &WaveEngine::setSamples)
         .function("getSamples", &WaveEngine::getSamples);
@@ -108,6 +115,13 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .function("generateWaves", &ACCircuitEngine::generateWaves)
         .function("getVoltagePoints", &ACCircuitEngine::getVoltagePoints)
         .function("getCurrentPoints", &ACCircuitEngine::getCurrentPoints);
+
+    emscripten::class_<PhasorEngine, emscripten::base<ACCircuitEngine>>("PhasorEngine")
+        .constructor<double, double, int>()
+        .function("getVSourcePhasor", &PhasorEngine::getVSourcePhasor)
+        .function("getVRPhasor", &PhasorEngine::getVRPhasor)
+        .function("getVLPhasor", &PhasorEngine::getVLPhasor)
+        .function("getVCPhasor", &PhasorEngine::getVCPhasor);
 
     // ── Spatial Structs ──
     emscripten::value_object<GridPoint2D>("GridPoint2D")
@@ -154,6 +168,11 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .constructor<int, int, double, double, double, double>()
         .function("compute",      &CurlEngine2D::compute)
         .function("computeCurl",  &CurlEngine2D::computeCurl);
+
+    emscripten::class_<GradientEngine2D, emscripten::base<SpatialFieldEngine2D>>("GradientEngine2D")
+        .constructor<int, int, double, double, double, double>()
+        .function("compute",      &GradientEngine2D::compute)
+        .function("computeGradient", &GradientEngine2D::computeGradient);
 
     // ── 3D Engines ──
     emscripten::class_<SpatialFieldEngine3D>("SpatialFieldEngine3D")
