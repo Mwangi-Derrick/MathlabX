@@ -12,14 +12,17 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
   const [ax, setAx] = useState(1.0)
   const [ay, setAy] = useState(1.0)
   const [az, setAz] = useState(1.0)
+  const [resX, setResX] = useState(5)
+  const [resY, setResY] = useState(5)
+  const [resZ, setResZ] = useState(5)
 
-  const { grid, compute, loading } = useSpatialEngine3D(8, 8, 8)
+  const { grid, compute, loading } = useSpatialEngine3D(resX, resY, resZ)
 
   useEffect(() => {
     if (!loading) {
       compute(preset, ax, ay, az, 1.0, 1.0, 1.0)
     }
-  }, [preset, ax, ay, az, loading, compute])
+  }, [preset, ax, ay, az, resX, resY, resZ, loading, compute])
 
   if (loading) {
     return (
@@ -40,6 +43,15 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
             <ToggleButton label="Radial" isActive={preset === 'radial'} onClick={() => setPreset('radial')} />
             <ToggleButton label="Custom" isActive={preset === 'custom'} onClick={() => setPreset('custom')} />
           </div>
+        </div>
+
+        <div className='section-group'>
+         <div className='section-label'>Resolution</div>
+         <div className='section-content'>
+          <Slider label="Res X" value={resX} min={0} max={30} step={1} onChange={setResX} />
+          <Slider label="Res Y" value={resY} min={0} max={30} step={1} onChange={setResY} />
+          <Slider label="Res Z" value={resZ} min={0} max={30} step={1} onChange={setResZ} />
+         </div>
         </div>
 
         <div className="section-group">

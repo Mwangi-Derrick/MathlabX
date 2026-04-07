@@ -15,14 +15,16 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
   const [preset, setPreset] = useState('radial')
   const [ax, setAx] = useState(1.0)
   const [ay, setAy] = useState(1.0)
+  const [resX, setResX] = useState(20)
+  const [resY, setResY] = useState(20)
 
-  const { grid, compute, loading } = useVectorCalc2D(20, 20)
+  const { grid, compute, loading } = useVectorCalc2D(resX, resY)
 
   useEffect(() => {
     if (!loading) {
       compute(opType, preset, ax, ay)
     }
-  }, [opType, preset, ax, ay, loading, compute])
+  }, [opType, preset, ax, ay, resX, resY, loading, compute])
 
   if (loading) return <div>Initializing Vector Calc Engine...</div>
 
@@ -51,6 +53,8 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
           <div className="section-label">Parameters</div>
           <Slider label="Scale X" value={ax} min={0} max={2} step={0.1} onChange={setAx} />
           <Slider label="Scale Y" value={ay} min={0} max={2} step={0.1} onChange={setAy} />
+          <Slider label="Resolution X" value={resX} min={5} max={50} step={1} onChange={setResX} />
+          <Slider label="Resolution Y" value={resY} min={5} max={50} step={1} onChange={setResY} />
         </div>
       </div>
 
