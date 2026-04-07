@@ -65,6 +65,7 @@ void SpatialFieldEngine2D::evaluateField(double x, double y, double& fx, double&
 void SpatialFieldEngine2D::generateGrid() {
     grid.clear();
     grid.resize(resX * resY);
+    //parallelize the loop across threads
     #pragma omp parallel for
     for (int iy = 0; iy < resY; ++iy) {
         for (int ix = 0; ix < resX; ++ix) {
@@ -137,15 +138,15 @@ void SpatialFieldEngine3D::generateGrid() {
 }
 
 std::vector<GridPoint3D> SpatialFieldEngine3D::getGrid() const { 
-    return grid; 
+    return grid; //retrun a variable named grid of type vector<GridPoint3D>
 }
 
 int SpatialFieldEngine3D::getResX() const { 
-    return resX; 
+    return resX; //retrun a variable named resX of type int
 }
 
 int SpatialFieldEngine3D::getResY() const { 
-    return resY; 
+    return resY; //retrun a variable named resY of type int
 }
 
 int SpatialFieldEngine3D::getResZ() const { 
