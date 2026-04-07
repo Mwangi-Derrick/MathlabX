@@ -14,7 +14,9 @@ export function useVectorCalc2D(rx: number, ry: number) {
   const divRef = useRef<DivergenceEngine2DInstance | null>(null)
   const curlRef = useRef<CurlEngine2DInstance | null>(null)
   const gradRef = useRef<GradientEngine2DInstance | null>(null)
+  const initDone = useRef(false)
 
+  // Initial mount
   useEffect(() => {
     let mounted = true
     const init = async () => {
@@ -29,6 +31,7 @@ export function useVectorCalc2D(rx: number, ry: number) {
       divRef.current = d
       curlRef.current = c
       gradRef.current = g
+      initDone.current = true
       setLoading(false)
     }
     init()
@@ -38,6 +41,29 @@ export function useVectorCalc2D(rx: number, ry: number) {
       curlRef.current?.delete()
       gradRef.current?.delete()
     }
+  }, [])
+
+  // Hot-swap on resolution change (no loading flash)
+  useEffect(() => {
+    if (!initDone.current) return
+    let cancelled = false
+    const swap = async () => {
+      const d = await createDivergenceEngine2D(rx, ry, -5, 5, -5, 5)
+      const c = await createCurlEngine2D(rx, ry, -5, 5, -5, 5)
+      const g = await createGradientEngine2D(rx, ry, -5, 5, -5, 5)
+      if (cancelled) {
+        d.delete(); c.delete(); g.delete();
+        return
+      }
+      divRef.current?.delete()
+      curlRef.current?.delete()
+      gradRef.current?.delete()
+      divRef.current = d
+      curlRef.current = c
+      gradRef.current = g
+    }
+    swap()
+    return () => { cancelled = true }
   }, [rx, ry])
 
   const compute = useCallback((type: 'div' | 'curl' | 'grad', preset: string, ax: number, ay: number) => {

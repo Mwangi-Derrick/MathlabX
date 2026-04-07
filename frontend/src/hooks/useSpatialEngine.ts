@@ -11,7 +11,9 @@ export function useSpatialEngine2D(rx: number, ry: number) {
   const [loading, setLoading] = useState(true)
   const [grid, setGrid] = useState<GridPoint2D[]>([])
   const engineRef = useRef<CurlEngine2DInstance | null>(null)
+  const initDone = useRef(false)
 
+  // Initial mount
   useEffect(() => {
     let mounted = true
     createCurlEngine2D(rx, ry, -5, 5, -5, 5).then(engine => {
@@ -20,12 +22,28 @@ export function useSpatialEngine2D(rx: number, ry: number) {
         return
       }
       engineRef.current = engine
+      initDone.current = true
       setLoading(false)
     })
     return () => {
       mounted = false
       engineRef.current?.delete()
     }
+  }, [])
+
+  // Hot-swap on resolution change (no loading flash)
+  useEffect(() => {
+    if (!initDone.current) return
+    let cancelled = false
+    createCurlEngine2D(rx, ry, -5, 5, -5, 5).then(newEngine => {
+      if (cancelled) {
+        newEngine.delete()
+        return
+      }
+      engineRef.current?.delete()
+      engineRef.current = newEngine
+    })
+    return () => { cancelled = true }
   }, [rx, ry])
 
   const compute = useCallback((preset: string, ax: number, ay: number, fx: number, fy: number) => {
@@ -51,7 +69,9 @@ export function useSpatialEngine3D(rx: number, ry: number, rz: number) {
   const [loading, setLoading] = useState(true)
   const [grid, setGrid] = useState<GridPoint3D[]>([])
   const engineRef = useRef<CurlEngine3DInstance | null>(null)
+  const initDone = useRef(false)
 
+  // Initial mount
   useEffect(() => {
     let mounted = true
     createCurlEngine3D(rx, ry, rz, -5, 5, -5, 5, -5, 5).then(engine => {
@@ -60,12 +80,28 @@ export function useSpatialEngine3D(rx: number, ry: number, rz: number) {
         return
       }
       engineRef.current = engine
+      initDone.current = true
       setLoading(false)
     })
     return () => {
       mounted = false
       engineRef.current?.delete()
     }
+  }, [])
+
+  // Hot-swap on resolution change (no loading flash)
+  useEffect(() => {
+    if (!initDone.current) return
+    let cancelled = false
+    createCurlEngine3D(rx, ry, rz, -5, 5, -5, 5, -5, 5).then(newEngine => {
+      if (cancelled) {
+        newEngine.delete()
+        return
+      }
+      engineRef.current?.delete()
+      engineRef.current = newEngine
+    })
+    return () => { cancelled = true }
   }, [rx, ry, rz])
 
   const compute = useCallback((preset: string, ax: number, ay: number, az: number, fx: number, fy: number, fz: number) => {
