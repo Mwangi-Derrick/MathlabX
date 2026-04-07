@@ -40,7 +40,6 @@ export function usePhasorEngine(start: number, end: number, samples: number) {
     const vr = engine.getVRPhasor(r, l, c, vm, f)
     const vl = engine.getVLPhasor(r, l, c, vm, f)
     const vc = engine.getVCPhasor(r, l, c, vm, f)
-    const vs = engine.getVSourcePhasor() // This returns Vm + 0j
     
     // Explicitly set source to get correct phi and Z from base ACCircuitEngine
     engine.setCircuitParameters(r, l, c)

@@ -24,7 +24,6 @@ export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, 
       const len = Math.sqrt(fx*fx + fy*fy)
       if (len < 0.001) return
 
-      const angle = Math.atan2(fy, fx)
       const scale = 15
       const tx = x + fx * scale
       const ty = y - fy * scale // canvas y is down

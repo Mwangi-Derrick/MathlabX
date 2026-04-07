@@ -1,20 +1,6 @@
-/**
- * useWaveEngine — React hook for interacting with the C++ WASM engine.
- * 
- * Lifecycle:
- *   1. On mount: loads WASM module and creates a WaveEngine instance
- *   2. Provides a generate() function that calls C++ methods for any mode
- *   3. Maintains separate sinePoints and cosinePoints for "both" mode
- *   4. On unmount: calls engine.delete() to free C++ heap memory
- * 
- * All slider parameters (amplitude, frequency, phase, samples) are passed
- * through to the C++ engine — no waveform computation is done in JavaScript.
- * The engine does the math, JS just renders the results.
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { WaveEngineInstance, Point2D } from '../lib/types'
-import { createWaveEngine } from '../lib/wasmLoader'
+import type { ACCircuitEngineInstance, Point2D } from '../lib/types'
+import { createACCircuitEngine } from '../lib/wasmLoader'
 
 /** Wave generation mode */
 type WaveMode = 'sin' | 'cos' | 'both'
@@ -41,10 +27,8 @@ export function useWaveEngine(): WaveEngineState {
   const [sinePoints, setSinePoints] = useState<Point2D[]>([])
   const [cosinePoints, setCosinePoints] = useState<Point2D[]>([])
 
-  // Use a ref for the engine instance so:
-  //   1. The cleanup function always has the latest reference (no stale closure)
-  //   2. We don't trigger re-renders when the engine reference changes
-  const engineRef = useRef<WaveEngineInstance | null>(null)
+  // Use a ref for the engine instance
+  const engineRef = useRef<ACCircuitEngineInstance | null>(null)
   const mountedRef = useRef(true)
 
   // ─── Initialize WASM engine on mount ──────────────────────────────────
@@ -54,7 +38,7 @@ export function useWaveEngine(): WaveEngineState {
 
     const init = async () => {
       try {
-        const engine = await createWaveEngine(-500, 500, 800)
+        const engine = await createACCircuitEngine(-500, 500, 800)
         
         if (!mountedRef.current) {
           // Component unmounted while we were loading — clean up immediately
@@ -81,9 +65,7 @@ export function useWaveEngine(): WaveEngineState {
       if (engineRef.current) {
         try {
           engineRef.current.delete()
-          console.log('[Hook] ✓ WaveEngine instance freed')
         } catch (e) {
-          // Engine may already be deleted in some edge cases
           console.warn('[Hook] Engine cleanup warning:', e)
         }
         engineRef.current = null
@@ -93,11 +75,6 @@ export function useWaveEngine(): WaveEngineState {
 
   // ─── Convert Emscripten vector to JS array ──────────────────────────
 
-  /**
-   * Emscripten's register_vector<Point2D> produces a wrapper with .size() and .get(i),
-   * NOT a regular JavaScript array. We must convert it to use in React state.
-   * We also call .delete() on the vector wrapper to free its C++ memory.
-   */
   const extractPoints = useCallback((wasmVector: any): Point2D[] => {
     const result: Point2D[] = []
     
@@ -112,17 +89,13 @@ export function useWaveEngine(): WaveEngineState {
       result.push({ x: p.x, y: p.y })
     }
 
-    // Free the temporary vector wrapper (the engine's internal vector is unaffected)
+    // Free the temporary vector wrapper
     wasmVector.delete()
 
     return result
   }, [])
 
   // ─── Unified generate function ────────────────────────────────────────
-  //
-  // This is the single entry point for all waveform generation.
-  // In "both" mode, we call the C++ engine twice: once for sine, once for cosine.
-  // Each call goes through the C++ WaveEngine → generates points → returns to JS.
 
   const generate = useCallback(
     (mode: WaveMode, amplitude: number, frequency: number, phase: number) => {
@@ -130,17 +103,18 @@ export function useWaveEngine(): WaveEngineState {
       if (!engine) return
 
       try {
+        // ACCircuitEngine uses setSource + generateWaves
+        // But for compatibility with the original useWaveEngine logic:
+        engine.setSource(amplitude, frequency / 1000) // adjust freq scale
+        engine.generateWaves()
+        
         if (mode === 'sin' || mode === 'both') {
-          // Call C++ generateSine(amplitude, frequency, phase)
-          engine.generateSine(amplitude, frequency, phase)
-          const raw = engine.getPoints()
+          const raw = engine.getVoltagePoints()
           setSinePoints(extractPoints(raw))
         }
 
         if (mode === 'cos' || mode === 'both') {
-          // Call C++ generateCosine(amplitude, frequency, phase)
-          engine.generateCosine(amplitude, frequency, phase)
-          const raw = engine.getPoints()
+          const raw = engine.getCurrentPoints()
           setCosinePoints(extractPoints(raw))
         }
       } catch (err) {

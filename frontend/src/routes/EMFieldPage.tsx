@@ -14,17 +14,14 @@ export const EMFieldPage: React.FC = () => {
   const [ax, setAx] = useState(1.0)
   const [ay, setAy] = useState(1.0)
   const [az, setAz] = useState(1.0)
-  const [fx, setFx] = useState(1.0)
-  const [fy, setFy] = useState(1.0)
-  const [fz, setFz] = useState(1.0)
 
   const { grid, compute, loading } = useSpatialEngine3D(8, 8, 8)
 
   useEffect(() => {
     if (!loading) {
-      compute(preset, ax, ay, az, fx, fy, fz)
+      compute(preset, ax, ay, az, 1.0, 1.0, 1.0)
     }
-  }, [preset, ax, ay, az, fx, fy, fz, loading, compute])
+  }, [preset, ax, ay, az, loading, compute])
 
   if (loading) return <div>Initializing 3D Spatial Engine...</div>
 

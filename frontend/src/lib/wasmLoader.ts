@@ -48,6 +48,9 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
     throw err
   })
 
+  if (!modulePromise) {
+    throw new Error('WASM module loading state lost.')
+  }
   return modulePromise
 }
 
