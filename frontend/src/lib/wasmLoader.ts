@@ -1,35 +1,26 @@
 /**
  * WASM Module Loader
  * 
- * Loads and initializes the Emscripten-compiled C++ wave engine.
- * 
- * Architecture:
- *   1. engine.cpp is compiled with MODULARIZE=1 + EXPORT_ES6=1
- *   2. This produces engine.mjs (factory function) + engine.wasm (binary)
- *   3. We import the factory, call it with locateFile config, and get back
- *      a Promise<WaveEngineModule> containing our bound C++ classes
- * 
- * The factory-function approach (MODULARIZE) is the correct Emscripten pattern.
- * It avoids polluting window.Module and works cleanly with Vite's module system.
+ * Loads and initializes the Emscripten-compiled C++ engines.
  */
 
-import type { WaveEngineModule, WaveEngineInstance } from '../../types/mathlab_x.d.ts'
-// @ts-ignore — Emscripten-generated file, no TS source
-import createModule from '../../../wasm/engine.mjs'
+import type { 
+  WaveEngineModule, 
+  WaveEngineInstance,
+  ACCircuitEngineInstance,
+  DivergenceEngine2DInstance,
+  CurlEngine2DInstance,
+  DivergenceEngine3DInstance,
+  CurlEngine3DInstance
+} from './types'
 
-// ─── Module Singleton ────────────────────────────────────────────────────────
-// Cache the module promise so we only initialize WASM once,
-// even if multiple components call loadWasmModule() concurrently.
+// @ts-ignore — Emscripten-generated file, no TS source
+import createModule from '../../../wasm/mathlab_x.mjs'
 
 let modulePromise: Promise<WaveEngineModule> | null = null
 
 /**
  * Load and initialize the WASM module.
- * Returns a cached promise on subsequent calls — WASM is only loaded once.
- * 
- * The locateFile callback tells Emscripten where to find the .wasm binary.
- * import.meta.url resolves relative to THIS file's location, so Vite
- * can correctly resolve the path in both dev and production builds.
  */
 export function loadWasmModule(): Promise<WaveEngineModule> {
   if (modulePromise) {
@@ -37,56 +28,71 @@ export function loadWasmModule(): Promise<WaveEngineModule> {
   }
 
   console.log('[WASM] Initializing module...')
-  const wasm_engine_path = new URL('../../../wasm/mathlab_x.mjs', import.meta.url).href
-  console.log(`[WASM] Loading from ${wasm_engine_path}`)
   modulePromise = createModule({
-    // Emscripten calls locateFile() to find the .wasm binary.
-    // We use import.meta.url so the path resolves correctly whether
-    // we're running in Vite dev server or a production build.
     locateFile: (path: string) => {
       if (path.endsWith('.wasm')) {
-        return new URL('../wasm/mathlab_x.wasm', import.meta.url).href
+        return new URL('../../../wasm/mathlab_x.wasm', import.meta.url).href
       }
       return path
     }
   }).then((module: WaveEngineModule) => {
-    // Validate that the expected bindings exist
     if (!module || typeof module.WaveEngine !== 'function') {
-      throw new Error(
-        'WASM module loaded but WaveEngine class not found. ' +
-        'Check that engine.cpp has EMSCRIPTEN_BINDINGS and was compiled with --bind.'
-      )
+      throw new Error('WASM module loaded but WaveEngine class not found.')
     }
-    console.log('[WASM] ✓ Module initialized — WaveEngine class available')
+    console.log('[WASM] ✓ Module initialized')
     return module
   }).catch((err: unknown) => {
-    // Reset the cached promise so a retry is possible
     modulePromise = null
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('[WASM] ✗ Failed to initialize:', msg)
     throw err
   })
 
   return modulePromise
 }
 
-/**
- * Create a new WaveEngine instance.
- * 
- * @param domainStart  Left boundary of the x-axis (default -500)
- * @param domainEnd    Right boundary of the x-axis (default 500)
- * @param samples      Number of sample points to compute (default 800)
- * @returns A WaveEngine instance — CALLER MUST call .delete() when done
- */
+/** Factory for WaveEngine */
 export async function createWaveEngine(
-  domainStart: number = -500,
-  domainEnd: number = 500,
-  samples: number = 800
+  start: number, end: number, samples: number
 ): Promise<WaveEngineInstance> {
   const module = await loadWasmModule()
+  return new module.WaveEngine(start, end, samples)
+}
 
-  const engine = new module.WaveEngine(domainStart, domainEnd, samples)
-  console.log(`[WASM] ✓ WaveEngine created (domain: [${domainStart}, ${domainEnd}], samples: ${samples})`)
+/** Factory for ACCircuitEngine */
+export async function createACCircuitEngine(
+  start: number, end: number, samples: number
+): Promise<ACCircuitEngineInstance> {
+  const module = await loadWasmModule()
+  return new module.ACCircuitEngine(start, end, samples)
+}
 
-  return engine
+/** Factory for DivergenceEngine2D */
+export async function createDivergenceEngine2D(
+  rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
+): Promise<DivergenceEngine2DInstance> {
+  const module = await loadWasmModule()
+  return new module.DivergenceEngine2D(rx, ry, xmin, xmax, ymin, ymax)
+}
+
+/** Factory for CurlEngine2D */
+export async function createCurlEngine2D(
+  rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
+): Promise<CurlEngine2DInstance> {
+  const module = await loadWasmModule()
+  return new module.CurlEngine2D(rx, ry, xmin, xmax, ymin, ymax)
+}
+
+/** Factory for DivergenceEngine3D */
+export async function createDivergenceEngine3D(
+  rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number
+): Promise<DivergenceEngine3DInstance> {
+  const module = await loadWasmModule()
+  return new module.DivergenceEngine3D(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax)
+}
+
+/** Factory for CurlEngine3D */
+export async function createCurlEngine3D(
+  rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number
+): Promise<CurlEngine3DInstance> {
+  const module = await loadWasmModule()
+  return new module.CurlEngine3D(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax)
 }
