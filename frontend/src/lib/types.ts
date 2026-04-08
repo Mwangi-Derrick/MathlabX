@@ -16,12 +16,19 @@ export type {
   WaveEngineInstance, 
   ACCircuitEngineInstance,
   PhasorEngineInstance,
+  FrequencyResponseEngineInstance,
   SpatialFieldEngine2DInstance,
   DivergenceEngine2DInstance,
   CurlEngine2DInstance,
   GradientEngine2DInstance,
+  StreamlineTracerInstance,
+  TheoremEngineInstance,
   SpatialFieldEngine3DInstance,
   DivergenceEngine3DInstance,
   CurlEngine3DInstance,
-  WaveEngineModule 
+  WaveEngineModule,
+  Point2DVectorVector,
+  TheoremResult,
+  FrequencyPoint,
+  FrequencyPointVector
 } from '../../types/mathlab_x.d.ts'

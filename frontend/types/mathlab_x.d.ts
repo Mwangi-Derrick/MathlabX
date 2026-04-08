@@ -67,6 +67,33 @@ export interface GridPoint3DVector {
   delete(): void
 }
 
+/** Vector of Vectors (for streamlines) */
+export interface Point2DVectorVector {
+  size(): number
+  get(index: number): Point2DVector
+  delete(): void
+}
+
+/** Result of a Theorem comparison */
+export interface TheoremResult {
+  lineIntegral: number
+  areaIntegral: number
+  matches: boolean
+}
+
+/** CNT 2: Frequency Response point */
+export interface FrequencyPoint {
+  freq: number
+  gain_db: number
+  phase_deg: number
+}
+
+export interface FrequencyPointVector {
+  size(): number
+  get(index: number): FrequencyPoint
+  delete(): void
+}
+
 /**
  * Instance of the C++ WaveEngine class.
  * Created via `new module.WaveEngine(start, end, samples)`.
@@ -109,6 +136,15 @@ export interface PhasorEngineInstance extends ACCircuitEngineInstance {
   getVCPhasor(res: number, l: number, c: number, vm: number, f: number): Complex
 }
 
+/** CNT 2: Bode Plot / Frequency Response */
+export interface FrequencyResponseEngineInstance extends ACCircuitEngineInstance {
+  sweepFrequency(startHz: number, endHz: number, points: number): void
+  getResponse(): FrequencyPointVector
+  getResonantFrequency(): number
+  getBandwidth(): number
+  getQualityFactor(): number
+}
+
 /** Instance of SpatialFieldEngine2D */
 export interface SpatialFieldEngine2DInstance {
   setPreset(name: string): void
@@ -138,6 +174,17 @@ export interface CurlEngine2DInstance extends SpatialFieldEngine2DInstance {
 export interface GradientEngine2DInstance extends SpatialFieldEngine2DInstance {
   compute(): void
   computeGradient(): void
+}
+
+/** EMAG 1: Streamline Tracer */
+export interface StreamlineTracerInstance extends SpatialFieldEngine2DInstance {
+  traceFromSeed(x0: number, y0: number, stepSize: number, maxSteps: number): Point2DVector
+  traceGrid(numSeeds: number, stepSize: number, maxSteps: number): Point2DVectorVector
+}
+
+/** Vector Calc 1: Theorem Verifier */
+export interface TheoremEngineInstance extends CurlEngine2DInstance {
+  verifyGreensTheorem(x0: number, y0: number, x1: number, y1: number): TheoremResult
 }
 
 /** Instance of SpatialFieldEngine3D */
@@ -177,6 +224,9 @@ export interface WaveEngineModule {
   DivergenceEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => DivergenceEngine2DInstance
   CurlEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => CurlEngine2DInstance
   GradientEngine2D: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => GradientEngine2DInstance
+  StreamlineTracer: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => StreamlineTracerInstance
+  TheoremEngine: new (rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number) => TheoremEngineInstance
+  FrequencyResponseEngine: new (samples: number, start: number, end: number) => FrequencyResponseEngineInstance
   SpatialFieldEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => SpatialFieldEngine3DInstance
   DivergenceEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => DivergenceEngine3DInstance
   CurlEngine3D: new (rx: number, ry: number, rz: number, xmin: number, xmax: number, ymin: number, ymax: number, zmin: number, zmax: number) => CurlEngine3DInstance

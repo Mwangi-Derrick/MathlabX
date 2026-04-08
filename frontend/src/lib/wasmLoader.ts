@@ -13,7 +13,10 @@ import type {
   GradientEngine2DInstance,
   DivergenceEngine3DInstance,
   CurlEngine3DInstance,
-  PhasorEngineInstance
+  PhasorEngineInstance,
+  FrequencyResponseEngineInstance,
+  StreamlineTracerInstance,
+  TheoremEngineInstance
 } from './types'
 
 // @ts-ignore — Emscripten-generated file, no TS source
@@ -117,4 +120,28 @@ export async function createCurlEngine3D(
 ): Promise<CurlEngine3DInstance> {
   const module = await loadWasmModule()
   return new module.CurlEngine3D(rx, ry, rz, xmin, xmax, ymin, ymax, zmin, zmax)
+}
+
+/** Factory for FrequencyResponseEngine */
+export async function createFrequencyResponseEngine(
+  samples: number, start: number, end: number
+): Promise<FrequencyResponseEngineInstance> {
+  const module = await loadWasmModule()
+  return new module.FrequencyResponseEngine(samples, start, end)
+}
+
+/** Factory for StreamlineTracer */
+export async function createStreamlineTracer(
+  rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
+): Promise<StreamlineTracerInstance> {
+  const module = await loadWasmModule()
+  return new module.StreamlineTracer(rx, ry, xmin, xmax, ymin, ymax)
+}
+
+/** Factory for TheoremEngine */
+export async function createTheoremEngine(
+  rx: number, ry: number, xmin: number, xmax: number, ymin: number, ymax: number
+): Promise<TheoremEngineInstance> {
+  const module = await loadWasmModule()
+  return new module.TheoremEngine(rx, ry, xmin, xmax, ymin, ymax)
 }
