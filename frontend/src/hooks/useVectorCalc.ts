@@ -74,8 +74,11 @@ export function useVectorCalc2D(rx: number, ry: number) {
     
     if (!engine) return
 
-    engine.setPreset(preset)
-    engine.setCustomParams(ax, ay, 1.0, 1.0)
+    if (preset === 'custom') {
+      engine.setCustomParams(ax, ay, 1.0, 1.0)
+    } else {
+      engine.setPreset(preset)
+    }
     engine.compute()
     
     const wasmGrid = engine.getGrid()

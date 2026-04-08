@@ -12,7 +12,7 @@ import { PageProps } from '../App'
 
 export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
   const [opType, setOpType] = useState<'div' | 'curl' | 'grad'>('div')
-  const [preset, setPreset] = useState('radial')
+  const [preset, setPreset] = useState('source')
   const [ax, setAx] = useState(1.0)
   const [ay, setAy] = useState(1.0)
   const [resX, setResX] = useState(20)
@@ -43,8 +43,10 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
         <div className="section-group">
           <div className="section-label">Field Preset</div>
           <select value={preset} onChange={(e) => setPreset(e.target.value)} style={{ width: '100%', padding: '8px', background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <option value="radial">Radial Field</option>
-            <option value="swirl">Swirl Field</option>
+            <option value="source">Radial (Source)</option>
+            <option value="rotation">Swirl (Rotation)</option>
+            <option value="sink">Sink Field</option>
+            <option value="saddle">Saddle Field</option>
             <option value="custom">Custom Params</option>
           </select>
         </div>
