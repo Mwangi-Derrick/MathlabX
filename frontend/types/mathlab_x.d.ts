@@ -150,6 +150,8 @@ export interface SpatialFieldEngine2DInstance {
   setPreset(name: string): void
   setCustomParams(ax: number, ay: number, fx: number, fy: number): void
   generateGrid(): void
+  setAmplitude(ax: number, ay: number): void
+  setFrequency(fx: number, fy: number): void
   getGrid(): GridPoint2DVector
   getResX(): number
   getResY(): number

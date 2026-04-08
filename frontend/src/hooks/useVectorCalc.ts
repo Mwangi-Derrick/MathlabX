@@ -77,6 +77,8 @@ export function useVectorCalc2D(rx: number, ry: number) {
     if (preset === 'custom') {
       engine.setCustomParams(ax, ay, 1.0, 1.0)
     } else {
+      engine.setAmplitude(ax, ay)
+      // engine.setFrequency(fx, fy)
       engine.setPreset(preset)
     }
     engine.compute()
