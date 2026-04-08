@@ -161,6 +161,8 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .function("setPreset",       &SpatialFieldEngine2D::setPreset)
         .function("setCustomParams", &SpatialFieldEngine2D::setCustomParams)
         .function("generateGrid",    &SpatialFieldEngine2D::generateGrid)
+        .function("setAmplitude",    &SpatialFieldEngine2D::setAmplitude)
+        .function("setFrequency",    &SpatialFieldEngine2D::setFrequency)
         .function("getGrid",         &SpatialFieldEngine2D::getGrid)
         .function("getResX",         &SpatialFieldEngine2D::getResX)
         .function("getResY",         &SpatialFieldEngine2D::getResY)
