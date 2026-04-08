@@ -121,10 +121,10 @@ void SpatialFieldEngine3D::setCustomParams(double ax, double ay, double az, doub
 }
 
 void SpatialFieldEngine3D::evaluateField3D(double x, double y, double z, double& fx, double& fy, double& fz) const {
-    if (preset == "rotation") { fx = -y; fy = x; fz = 0.0; }
-    else if (preset == "source") { fx = x; fy = y; fz = z; }
-    else if (preset == "sink") { fx = -x; fy = -y; fz = -z; }
-    else if (preset == "helical") { fx = -y; fy = x; fz = 1.0; }
+    if (preset == "rotation") { fx = ampX * -y; fy = ampY * x; fz = 0.0; }
+    else if (preset == "source") { fx = ampX * x; fy = ampY * y; fz = ampZ * z; }
+    else if (preset == "sink") { fx = ampX * -x; fy = ampY * -y; fz = ampZ * -z; }
+    else if (preset == "helical") { fx = ampX * -y; fy = ampY * x; fz = ampZ * 1.0; }
     else {
         fx = ampX * std::cos(freqX * y);
         fy = ampY * std::sin(freqY * x);
