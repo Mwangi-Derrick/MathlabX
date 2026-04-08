@@ -53,10 +53,22 @@ void SpatialFieldEngine2D::setCustomParams(double ax, double ay, double fx, doub
 }
 
 void SpatialFieldEngine2D::evaluateField(double x, double y, double& fx, double& fy) const {
-    if (preset == "rotation") { fx = -y; fy = x; }
-    else if (preset == "source") { fx = x; fy = y; }
-    else if (preset == "sink") { fx = -x; fy = -y; }
-    else if (preset == "saddle") { fx = x; fy = -y; }
+    if (preset == "rotation") { 
+        fx = ampX * (-y); 
+        fy = ampY * (x); 
+    }
+    else if (preset == "source") { 
+        fx = ampX * (x); 
+        fy = ampY * (y); 
+    }
+    else if (preset == "sink") { 
+        fx = ampX * (-x); 
+        fy = ampY * (-y); 
+    }
+    else if (preset == "saddle") { 
+        fx = ampX * (x); 
+        fy = ampY * (-y); 
+    }
     else {
         fx = ampX * std::cos(freqX * y);
         fy = ampY * std::sin(freqY * x);
