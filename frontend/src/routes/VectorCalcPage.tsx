@@ -53,8 +53,8 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
 
         <div className="section-group">
           <div className="section-label">Parameters</div>
-          <Slider label="Scale X" value={ax} min={0} max={2} step={0.1} onChange={setAx} />
-          <Slider label="Scale Y" value={ay} min={0} max={2} step={0.1} onChange={setAy} />
+          <Slider label="Scale X" value={ax} min={-2} max={2} step={0.1} onChange={setAx} />
+          <Slider label="Scale Y" value={ay} min={-2} max={2} step={0.1} onChange={setAy} />
           <Slider label="Resolution X" value={resX} min={5} max={50} step={1} onChange={setResX} />
           <Slider label="Resolution Y" value={resY} min={5} max={50} step={1} onChange={setResY} />
         </div>
