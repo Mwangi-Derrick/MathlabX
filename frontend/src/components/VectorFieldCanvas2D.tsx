@@ -1,14 +1,18 @@
 import React, { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import type { GridPoint2D } from '../lib/types'
+import type { GridPoint2D, Point2D } from '../lib/types'
 
 interface VectorFieldCanvas2DProps {
   grid: GridPoint2D[]
   type: 'div' | 'curl' | 'grad'
+  streamlines?: Point2D[][]
+  onSelection?: (bounds: { x0: number, y0: number, x1: number, y1: number }) => void
 }
 
-export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, type }) => {
+export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, type, streamlines = [], onSelection }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const selectionRef = useRef<{ x0: number, y0: number, x1: number, y1: number } | null>(null)
+  const isDragging = useRef(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -97,11 +101,72 @@ export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, 
       drawArrow(x, y, p.fx, p.fy, color)
     })
 
-  }, [grid, type])
+    // ─── Streamlines ───────────────────────────────
+    streamlines.forEach(line => {
+        if (line.length < 2) return
+        ctx.beginPath()
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)'
+        ctx.lineWidth = 1.5
+        ctx.shadowColor = '#3b82f6'
+        ctx.shadowBlur = 5
+        
+        ctx.moveTo(mapX(line[0].x), mapY(line[0].y))
+        for (let i = 1; i < line.length; i++) {
+            ctx.lineTo(mapX(line[i].x), mapY(line[i].y))
+        }
+        ctx.stroke()
+        ctx.shadowBlur = 0
+    })
+
+    // ─── Selection Box ─────────────────────────────
+    if (selectionRef.current) {
+        const { x0, y0, x1, y1 } = selectionRef.current
+        ctx.strokeStyle = '#22c55e'
+        ctx.setLineDash([5, 5])
+        ctx.strokeRect(mapX(x0), mapY(y0), mapX(x1) - mapX(x0), mapY(y1) - mapY(y0))
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.1)'
+        ctx.fillRect(mapX(x0), mapY(y0), mapX(x1) - mapX(x0), mapY(y1) - mapY(y0))
+        ctx.setLineDash([])
+    }
+
+  }, [grid, type, streamlines])
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x0 = (e.clientX - rect.left) / canvas.width * 10 - 5
+    const y0 = 5 - (e.clientY - rect.top) / canvas.height * 10
+    selectionRef.current = { x0, y0, x1: x0, y1: y0 }
+    isDragging.current = true
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current || !selectionRef.current) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x1 = (e.clientX - rect.left) / canvas.width * 10 - 5
+    const y1 = 5 - (e.clientY - rect.top) / canvas.height * 10
+    selectionRef.current = { ...selectionRef.current, x1, y1 }
+  }
+
+  const handleMouseUp = () => {
+    isDragging.current = false
+    if (selectionRef.current && onSelection) {
+        onSelection(selectionRef.current)
+    }
+  }
 
   return (
     <div className="canvas-wrap" style={{ display: 'inline-block' }}>
-      <canvas ref={canvasRef} style={{ border: '2px solid rgba(30, 41, 59, 0.5)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }} />
+      <canvas 
+        ref={canvasRef} 
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        style={{ cursor: 'crosshair', border: '2px solid rgba(30, 41, 59, 0.5)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }} 
+      />
       <div className="canvas-badge" style={{ bottom: '15px', right: '15px' }}>{type.toUpperCase()} FIELD</div>
     </div>
   )
