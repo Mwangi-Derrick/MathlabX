@@ -6,6 +6,7 @@
 // SpatialFieldEngine Implementation
 SpatialFieldEngine::SpatialFieldEngine(
     int rx, int ry, int rz,
+    //min and max map the domain ie [-50,50] a closed set of 100 points
     double xmin, double xmax,
     double ymin, double ymax,
     double zmin, double zmax
@@ -129,8 +130,41 @@ void SpatialFieldEngine3D::generateGrid() {
                 double y = yMin + iy * dy;
                 double z = zMin + iz * dz;
                 double fx, fy, fz;
+                //whats fx fy fz?
+                //fx fy fz are the components of the vector field at the point (x, y, z)
+                //they are calculated by the evaluateField3D function
+                //difference between x,y,z and fx,fy,fz?
+                //x,y,z are the coordinates of the point
+                //fx,fy,fz are the components of the vector field at the point (x, y, z)
+                //they are the values that are used to calculate the divergence
+                //evaluate3d changes the values in memory so no return value is needed
+                //why do we need to do this?
+                //because we need to calculate the divergence of the vector field at each point
                 evaluateField3D(x, y, z, fx, fy, fz);
+                //idx is the index of the grid point
+                //what is idx?
+                //idx is the index of the grid point
+                //why do we need to do this?
+                //because we need to calculate the divergence of the vector field at each point
+                //what is grid?
+                //grid is a vector of GridPoint3D objects
+                //what is GridPoint3D?
+                //GridPoint3D is a struct that contains the coordinates of the grid point
+                //and the components of the vector field at the grid point
+                //whats idx * resX * resY?
+                //idx * resX * resY is the index of the grid point in the z-dimension
+                //what is iy * resX?
+                //iy * resX is the index of the grid point in the y-dimension
+                //what is ix?
+                //ix is the index of the grid point in the x-dimension
+                //why not resZ * iz + iy * resX + ix?
+                //because resZ * iz + iy * resX + ix is the index of the grid point in the z-dimension
+                //and we need to calculate the divergence of the vector field at each point
+                //i dont understand why iz * resX * resY
+                //think of it like a 3d array
+                // 
                 int idx = iz * resX * resY + iy * resX + ix;
+                //grid is a vector of GridPoint3D objects
                 grid[idx] = { x, y, z, fx, fy, fz, 0.0, 0.0, 0.0, 0.0 };
             }
         }

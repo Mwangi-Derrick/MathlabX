@@ -13,6 +13,7 @@ void DivergenceEngine2D::computeDivergence() {
     for (int iy = 1; iy < resY - 1; ++iy) {
         for (int ix = 1; ix < resX - 1; ++ix) {
             int idx = iy * resX + ix;
+            //this is a central difference approximation of the divergence
             grid[idx].divergence = VectorMath::divergence2D(
                 grid[iy * resX + (ix - 1)], 
                 grid[iy * resX + (ix + 1)],
