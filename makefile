@@ -27,6 +27,8 @@ SRCS = \
     cpp-engine/spatial/spatialEngine.cpp \
     cpp-engine/spatial/curl.cpp \
     cpp-engine/spatial/divergence.cpp \
+    cpp-engine/spatial/streamline.cpp \
+    cpp-engine/spatial/Theorems.cpp \
     cpp-engine/time_domain/ACCircuitEngine.cpp \
     cpp-engine/time_domain/WaveEngine.cpp \
     cpp-engine/bindings/mathlab_x.cpp
