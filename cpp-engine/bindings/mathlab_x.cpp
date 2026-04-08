@@ -30,6 +30,8 @@
 #include "../spatial/divergence.h"
 #include "../spatial/curl.h"
 #include "../spatial/gradient.h"
+#include "../spatial/streamline.h"
+#include "../spatial/Theorems.h"
 #include "../checkHardware.h"
 
 /**
@@ -146,6 +148,12 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
 
     emscripten::register_vector<GridPoint2D>("GridPoint2DVector");
     emscripten::register_vector<GridPoint3D>("GridPoint3DVector");
+    emscripten::register_vector<std::vector<Point2D>>("Point2DVectorVector");
+
+    emscripten::value_object<TheoremResult>("TheoremResult")
+        .field("lineIntegral", &TheoremResult::lineIntegral)
+        .field("areaIntegral", &TheoremResult::areaIntegral)
+        .field("matches",      &TheoremResult::matches);
 
     // ── 2D Engines ──
     emscripten::class_<SpatialFieldEngine2D>("SpatialFieldEngine2D")
@@ -173,6 +181,15 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .constructor<int, int, double, double, double, double>()
         .function("compute",      &GradientEngine2D::compute)
         .function("computeGradient", &GradientEngine2D::computeGradient);
+
+    emscripten::class_<StreamlineTracer, emscripten::base<SpatialFieldEngine2D>>("StreamlineTracer")
+        .constructor<int, int, double, double, double, double>()
+        .function("traceFromSeed", &StreamlineTracer::traceFromSeed)
+        .function("traceGrid",     &StreamlineTracer::traceGrid);
+
+    emscripten::class_<TheoremEngine, emscripten::base<CurlEngine2D>>("TheoremEngine")
+        .constructor<int, int, double, double, double, double>()
+        .function("verifyGreensTheorem", &TheoremEngine::verifyGreensTheorem);
 
     // ── 3D Engines ──
     emscripten::class_<SpatialFieldEngine3D>("SpatialFieldEngine3D")
