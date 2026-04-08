@@ -31,7 +31,7 @@ struct Point3D {
  * Inherits WaveEngine and implements Series RLC electrical physics.
  */
 class ACCircuitEngine : public WaveEngine {
-private:
+protected:
     double R;           // Resistance in Ohms
     double L;           // Inductance in Henries
     double C;           // Capacitance in Farads
