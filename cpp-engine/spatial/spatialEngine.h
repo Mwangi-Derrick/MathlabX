@@ -46,6 +46,8 @@ public:
     void setCustomParams(double ax, double ay, double fx, double fy);
     void evaluateField(double x, double y, double& fx, double& fy) const;
     void generateGrid();
+    void setAmplitude(double ax, double ay);
+    void setFrequency(double fx, double fy);
     std::vector<GridPoint2D> getGrid() const;
     int getResX() const;
     int getResY() const;

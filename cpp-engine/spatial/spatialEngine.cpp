@@ -75,6 +75,14 @@ void SpatialFieldEngine2D::evaluateField(double x, double y, double& fx, double&
     }
 }
 
+void SpatialFieldEngine2D::setAmplitude(double ax, double ay) {
+    ampX = ax; ampY = ay;
+}
+
+void SpatialFieldEngine2D::setFrequency(double fx, double fy) {
+    freqX = fx; freqY = fy;
+}
+
 void SpatialFieldEngine2D::generateGrid() {
     grid.clear();
     grid.resize(resX * resY);
