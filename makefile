@@ -40,8 +40,9 @@ CLI_OBJS = $(patsubst %.cpp,$(CLI_BUILD_DIR)/%.o,$(subst /,_,$(CLI_SRCS)))
 # ============================================================================
 # WebAssembly Configuration (Emscripten)
 # ============================================================================
-EMSDK_PATH   = /c/Users/user/emsdk/upstream/emscripten
-WASM_CXX     = $(EMSDK_PATH)/em++.bat
+# Override these on Linux or CI if needed (e.g., make wasm WASM_CXX=em++)
+EMSDK_PATH   ?= /c/Users/user/emsdk/upstream/emscripten
+WASM_CXX     ?= $(EMSDK_PATH)/em++.bat
 
 WASM_CXXFLAGS = -O3 -msimd128 -std=c++17 -Wall \
                 -Icpp-engine/math \
