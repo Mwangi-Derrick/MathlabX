@@ -1,8 +1,13 @@
 #ifndef PHASOR_ENGINE_H
 #define PHASOR_ENGINE_H
 
+#include <cmath>
 #include "../time_domain/ACCircuitEngine.h"
 #include "../math/complex_math.h"
+
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923
+#endif
 
 /**
  * PhasorEngine — Specialization for vector/phasor diagrams.
