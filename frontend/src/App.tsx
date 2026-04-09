@@ -55,8 +55,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 
 export const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState('ac')
-  const [uiMode, setUiMode] = useState<'basic' | 'advanced'>('basic')
-  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark')
+  const [uiMode, setUiMode] = useState<'basic' | 'advanced'>('advanced')
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('light')
   
   const CurrentComponent = modules.find((m) => m.id === activeModule)?.component || (() => null)
 

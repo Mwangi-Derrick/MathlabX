@@ -777,7 +777,7 @@ input[type="range"]::-moz-range-thumb {
 .ui-toggle:hover {
   background: var(--bg-elevated);
   border-color: var(--blue-500);
-  color: #fff;
+  color: #4f4a4a;
 }
 
 .ui-toggle.advanced {
