@@ -27,4 +27,15 @@ struct GridPoint3D{
     double curl_x, curl_y, curl_z; // The components of the curl at this point (for 3D fields)
 };
 
+/**
+ * PhasorState: Holds the instantaneous complex values for the 4 main phasors
+ * used in rotating 3D/2D diagrams.
+ */
+struct PhasorState {
+    double vs_real, vs_imag;
+    double vr_real, vr_imag;
+    double vl_real, vl_imag;
+    double vc_real, vc_imag;
+};
+
 #endif // STRUCTS_H
