@@ -49,8 +49,8 @@ interface WaveCanvasProps {
 }
 
 /** Colors for the two waveforms */
-const SINE_COLOR = '#2563eb'    // Blue
-const COSINE_COLOR = '#16a34a'  // Green
+const VOLTAGE_COLOR = '#22d3ee' // Cyan 400
+const CURRENT_COLOR = '#fbbf24' // Amber 400
 
 export const WaveCanvas: React.FC<WaveCanvasProps> = ({
   sinePoints,
@@ -249,7 +249,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
       if (midIdx < points.length) {
         const dotX = cx + midIdx * scaleX
         const omega = 2 * Math.PI * frequency
-        const dotVal = color === SINE_COLOR
+        const dotVal = color === VOLTAGE_COLOR
           ? amplitude * Math.sin(omega * time + phase)
           : amplitude * Math.cos(omega * time + phase)
         const dotY = cy - dotVal * scaleY
@@ -263,7 +263,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
           const trailIdx = midIdx - j * 2
           if (trailIdx >= 0) {
             const tx = cx + trailIdx * scaleX
-            const tVal = color === SINE_COLOR
+            const tVal = color === VOLTAGE_COLOR
               ? amplitude * Math.sin(omega * (time - j * 0.005) + phase)
               : amplitude * Math.cos(omega * (time - j * 0.005) + phase)
             const ty = cy - tVal * scaleY
@@ -294,10 +294,10 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
 
     // ─── Render based on mode ───────────────────────────────────────
     if (waveMode === 'sin' || waveMode === 'both') {
-      drawWave(sinePoints, SINE_COLOR, 1)
+      drawWave(sinePoints, VOLTAGE_COLOR, 1)
     }
     if (waveMode === 'cos' || waveMode === 'both') {
-      drawWave(cosinePoints, COSINE_COLOR, waveMode === 'both' ? 0.75 : 1)
+      drawWave(cosinePoints, CURRENT_COLOR, waveMode === 'both' ? 0.75 : 1)
     }
 
     // ─── Amplitude reference lines ──────────────────────────────────
