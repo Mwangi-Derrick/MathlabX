@@ -3,34 +3,52 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Setup Emscripten
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install latest
-          ./emsdk activate latest
-          
-      - name: Build WASM
-        run: |
-          source emsdk/emsdk_env.sh
-          make wasm
-          
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.51
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Verify Emscripten
+        run: emcc -v
+
+      - name: Build WASM Kernel
+        run: make wasm WASM_CXX=em++
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Build Frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-          
+        working-directory: frontend
+        run: npm run build
+
+      - name: Add .nojekyll
+        run: touch frontend/dist/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
           publish_branch: gh-pages
+          force_orphan: true
