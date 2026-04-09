@@ -96,6 +96,16 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .field("real", &Complex::real)
         .field("imag", &Complex::imag);
 
+    emscripten::value_object<PhasorState>("PhasorState")
+        .field("vs_real", &PhasorState::vs_real)
+        .field("vs_imag", &PhasorState::vs_imag)
+        .field("vr_real", &PhasorState::vr_real)
+        .field("vr_imag", &PhasorState::vr_imag)
+        .field("vl_real", &PhasorState::vl_real)
+        .field("vl_imag", &PhasorState::vl_imag)
+        .field("vc_real", &PhasorState::vc_real)
+        .field("vc_imag", &PhasorState::vc_imag);
+
     emscripten::class_<WaveEngine>("WaveEngine")
         .function("setSamples", &WaveEngine::setSamples)
         .function("getSamples", &WaveEngine::getSamples);
@@ -114,6 +124,8 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .function("getRealPower", &ACCircuitEngine::getRealPower)
         .function("getReactivePower", &ACCircuitEngine::getReactivePower)
         .function("getApparentPower", &ACCircuitEngine::getApparentPower)
+        .function("getResonantCapacitance", &ACCircuitEngine::getResonantCapacitance)
+        .function("getPhasorState", &ACCircuitEngine::getPhasorState)
         .function("generateWaves", &ACCircuitEngine::generateWaves)
         .function("getVoltagePoints", &ACCircuitEngine::getVoltagePoints)
         .function("getCurrentPoints", &ACCircuitEngine::getCurrentPoints);
