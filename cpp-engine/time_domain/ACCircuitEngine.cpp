@@ -119,3 +119,34 @@ std::vector<Point2D> ACCircuitEngine::getVoltagePoints() const {
 std::vector<Point2D> ACCircuitEngine::getCurrentPoints() const { 
     return pointsCurrent; 
 }
+
+double ACCircuitEngine::getResonantCapacitance() const {
+    double omega = getOmega();
+    if (omega <= 0.0 || L <= 0.0) return 0.0001; // Default fallback
+    return 1.0 / (omega * omega * L);
+}
+
+PhasorState ACCircuitEngine::getPhasorState(double t) const {
+    double omega = getOmega();
+    double phi = getPhaseAngle();
+    double im = getCurrentAmplitude();
+    double vs_angle = omega * t;
+    double vr_angle = omega * t - phi;
+    double vl_angle = omega * t - phi + (M_PI / 2.0);
+    double vc_angle = omega * t - phi - (M_PI / 2.0);
+
+    PhasorState state;
+    state.vs_real = Vm * std::cos(vs_angle);
+    state.vs_imag = Vm * std::sin(vs_angle);
+    
+    state.vr_real = (im * R) * std::cos(vr_angle);
+    state.vr_imag = (im * R) * std::sin(vr_angle);
+    
+    state.vl_real = (im * getInductiveReactance()) * std::cos(vl_angle);
+    state.vl_imag = (im * getInductiveReactance()) * std::sin(vl_angle);
+    
+    state.vc_real = (im * getCapacitiveReactance()) * std::cos(vc_angle);
+    state.vc_imag = (im * getCapacitiveReactance()) * std::sin(vc_angle);
+    
+    return state;
+}
