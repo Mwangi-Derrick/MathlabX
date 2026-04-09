@@ -2,19 +2,31 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <filesystem>
+
 #include "../cpp-engine/time_domain/ACCircuitEngine.h"
 #include "../cpp-engine/time_domain/PhasorEngine.h"
 #include "../cpp-engine/spatial/curl.h"
 #include "../cpp-engine/spatial/divergence.h"
+#include "../logging/JsonLogger.h"
 
 /**
  * JKUAT OOP 2nd Year Mini-Project: MathLabX CLI
- * This driver demonstrates:
- * 1. Inheritance (WaveEngine -> ACCircuitEngine -> PhasorEngine)
- * 2. Polymorphism (Virtual destructors and method overriding)
- * 3. Abstraction (Encapsulating physics formulas in class methods)
- * 4. Data Logging (JSON-style output for interoperability)
+ *
+ * OOP Concepts demonstrated:
+ * 1. Inheritance   - WaveEngine -> ACCircuitEngine -> PhasorEngine
+ *                  - JsonLogger inherited per simulation module
+ * 2. Polymorphism  - Virtual destructors, method overriding
+ * 3. Abstraction   - Physics formulas encapsulated in engine methods
+ * 4. Encapsulation - JsonLogger hides JSON serialization internals
+ * 5. Data Logging  - Each simulation flushes structured JSON to logs/
  */
+
+static const std::string LOG_DIR = "logs";
+
+void ensureLogDir() {
+    std::filesystem::create_directories(LOG_DIR);
+}
 
 void printHeader(const std::string& title) {
     std::cout << "\n========================================\n";
@@ -22,13 +34,14 @@ void printHeader(const std::string& title) {
     std::cout << "========================================\n";
 }
 
+// ============================================================
+// 1. AC RLC Circuit
+// ============================================================
 void runACCircuitSimulation() {
     printHeader("1. AC RLC CIRCUIT ANALYSIS");
-    
-    // Instantiate the engine (demonstrates OOP Encapsulation)
+
     ACCircuitEngine circuit;
-    
-    // User inputs (Simulation parameters)
+
     double R = 10.0;   // 10 Ohms
     double L = 0.05;   // 50 mH
     double C = 100e-6; // 100 uF
@@ -39,78 +52,115 @@ void runACCircuitSimulation() {
     circuit.setSource(Vm, f);
     circuit.generateWaves();
 
-    // Output results in JSON format (Modern Logging)
-    std::cout << "{\n";
-    std::cout << "  \"component\": \"ACCircuitEngine\",\n";
-    std::cout << "  \"parameters\": {\n";
-    std::cout << "    \"resistance\": " << R << ",\n";
-    std::cout << "    \"inductance\": " << L << ",\n";
-    std::cout << "    \"capacitance\": " << C << "\n";
-    std::cout << "  },\n";
-    std::cout << "  \"results\": {\n";
-    std::cout << "    \"omega\": " << circuit.getOmega() << ",\n";
-    std::cout << "    \"impedance\": " << circuit.getImpedance() << ",\n";
-    std::cout << "    \"phase_angle_rad\": " << circuit.getPhaseAngle() << ",\n";
-    std::cout << "    \"power_factor\": " << circuit.getPowerFactor() << ",\n";
-    std::cout << "    \"real_power_W\": " << circuit.getRealPower() << ",\n";
-    std::cout << "    \"reactive_power_VAR\": " << circuit.getReactivePower() << "\n";
-    std::cout << "  }\n";
-    std::cout << "}\n";
+    // --- Logging (Encapsulation + Inheritance demo) ---
+    JsonLogger logger("ACCircuitEngine");
+
+    // Parameters block (nested JSON object built manually via logRaw)
+    std::ostringstream params;
+    params << "{\n"
+           << "    \"resistance\": " << R << ",\n"
+           << "    \"inductance\": " << L << ",\n"
+           << "    \"capacitance\": " << C << ",\n"
+           << "    \"source_voltage_peak\": " << Vm << ",\n"
+           << "    \"frequency_hz\": " << f << "\n"
+           << "  }";
+    logger.logRaw("parameters", params.str());
+
+    // Results
+    logger.logDouble("omega_rad_per_s",    circuit.getOmega());
+    logger.logDouble("impedance_ohms",     circuit.getImpedance());
+    logger.logDouble("phase_angle_rad",    circuit.getPhaseAngle());
+    logger.logDouble("power_factor",       circuit.getPowerFactor());
+    logger.logDouble("real_power_W",       circuit.getRealPower());
+    logger.logDouble("reactive_power_VAR", circuit.getReactivePower());
+
+    logger.printToConsole();
+    logger.flush(LOG_DIR + "/ac_circuit.json");
 }
 
+// ============================================================
+// 2. Phasor Diagram
+// ============================================================
 void runPhasorSimulation() {
     printHeader("2. PHASOR VECTOR DIAGRAM");
 
-    // PhasorEngine inherits from ACCircuitEngine (Inheritance)
     PhasorEngine phasor;
-    
+
     double R = 50.0, L = 0.2, C = 10e-6, Vm = 100.0, f = 60.0;
-    
+
     Complex vr = phasor.getVRPhasor(R, L, C, Vm, f);
     Complex vl = phasor.getVLPhasor(R, L, C, Vm, f);
     Complex vc = phasor.getVCPhasor(R, L, C, Vm, f);
 
-    std::cout << "{\n";
-    std::cout << "  \"component\": \"PhasorEngine\",\n";
-    std::cout << "  \"vectors\": {\n";
-    std::cout << "    \"VR\": {\"real\": " << vr.real << ", \"imag\": " << vr.imag << "},\n";
-    std::cout << "    \"VL\": {\"real\": " << vl.real << ", \"imag\": " << vl.imag << "},\n";
-    std::cout << "    \"VC\": {\"real\": " << vc.real << ", \"imag\": " << vc.imag << "}\n";
-    std::cout << "  }\n";
-    std::cout << "}\n";
+    JsonLogger logger("PhasorEngine");
+
+    // Each phasor as a nested object
+    auto phasorJson = [](const Complex& c) -> std::string {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6);
+        oss << "{\"real\": " << c.real << ", \"imag\": " << c.imag << "}";
+        return oss.str();
+    };
+
+    logger.logRaw("VR", phasorJson(vr));
+    logger.logRaw("VL", phasorJson(vl));
+    logger.logRaw("VC", phasorJson(vc));
+
+    logger.printToConsole();
+    logger.flush(LOG_DIR + "/phasor.json");
 }
 
+// ============================================================
+// 3. Spatial Field (Curl / Divergence)
+// ============================================================
 void runSpatialSimulation() {
     printHeader("3. SPATIAL FIELD CALCULUS (CURL/DIV)");
 
-    // Demonstrates abstraction and reuse of spatial grid logic
-    CurlEngine2D curlEngine(20, 20); // 20x20 Grid
+    CurlEngine2D curlEngine(20, 20);
     curlEngine.setPreset("swirl");
     curlEngine.compute();
 
     auto grid = curlEngine.getGrid();
-    
-    std::cout << "{\n";
-    std::cout << "  \"component\": \"CurlEngine2D\",\n";
-    std::cout << "  \"grid_info\": {\n";
-    std::cout << "    \"resolution\": \"20x20\",\n";
-    std::cout << "    \"total_points\": " << grid.size() << ",\n";
-    std::cout << "    \"sample_point_100\": {\n";
-    std::cout << "      \"x\": " << grid[100].x << ",\n";
-    std::cout << "      \"y\": " << grid[100].y << ",\n";
-    std::cout << "      \"curl_z\": " << grid[100].curl_z << "\n";
-    std::cout << "    }\n";
-    std::cout << "  }\n";
-    std::cout << "}\n";
+
+    JsonLogger logger("CurlEngine2D");
+
+    logger.logString("preset",     "swirl");
+    logger.logString("resolution", "20x20");
+    logger.logInt("total_points",  static_cast<int>(grid.size()));
+
+    if (grid.size() > 100) {
+        std::ostringstream sample;
+        sample << std::fixed << std::setprecision(6);
+        sample << "{\n"
+               << "    \"x\": "      << grid[100].x      << ",\n"
+               << "    \"y\": "      << grid[100].y      << ",\n"
+               << "    \"curl_z\": " << grid[100].curl_z << "\n"
+               << "  }";
+        logger.logRaw("sample_point_100", sample.str());
+    }
+
+    logger.printToConsole();
+    logger.flush(LOG_DIR + "/spatial_curl.json");
 }
 
+// ============================================================
+// Main
+// ============================================================
 int main() {
-    std::cout << "MathLabX Numerical Kernel CLI - [JKUAT EEE/OOP Submission]\n";
-    
+    std::cout << "MathLabX Numerical Kernel CLI\n";
+    std::cout << "JKUAT EEE OOP Submission - 2nd Year\n";
+    std::cout << "Logging output -> " << LOG_DIR << "/\n";
+
+    ensureLogDir();
+
     runACCircuitSimulation();
     runPhasorSimulation();
     runSpatialSimulation();
 
-    std::cout << "\nSimulation Complete. All units verified.\n";
+    std::cout << "\n========================================\n";
+    std::cout << "  Simulation Complete. All units verified.\n";
+    std::cout << "  JSON logs written to: " << LOG_DIR << "/\n";
+    std::cout << "========================================\n";
+
     return 0;
 }
