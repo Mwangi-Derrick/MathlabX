@@ -18,7 +18,7 @@ CLI_INCLUDES = -Icpp-engine/math \
                -Ilogging \
                -I.
 
-CLI_TARGET   = cli.exe
+CLI_TARGET   = cmd/cli.exe
 
 # Separate object dir for CLI - FIXES the pattern rule collision with WASM
 CLI_BUILD_DIR = build/cli
