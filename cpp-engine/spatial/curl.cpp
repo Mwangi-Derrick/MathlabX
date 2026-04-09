@@ -8,7 +8,10 @@
 CurlEngine2D::CurlEngine2D(int rx, int ry, 
                            double xmin, double xmax,
                            double ymin, double ymax) 
-    : SpatialFieldEngine2D(rx, ry, xmin, xmax, ymin, ymax) {}
+    : SpatialFieldEngine2D(rx, ry, xmin, xmax, ymin, ymax) {}//instantiate the sptial engine with the given parameters
+    //the spatail engine retruns varaible grid of type vector<GridPoint2D> which is a struct that contains the coordinates of the grid point and the components of the vector field at the grid point
+    //the curl is calculated using the central difference approximation of the curl in 2D which is given by the formula:
+    //curl_z = (dF_y/dx - dF_x/dy) where F_x and F_y are the components of the vector field at the grid point
 
 void CurlEngine2D::computeCurl() {
     for (int iy = 1; iy < resY - 1; ++iy) {

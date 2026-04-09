@@ -100,7 +100,7 @@ void SpatialFieldEngine2D::generateGrid() {
 }
 
 std::vector<GridPoint2D> SpatialFieldEngine2D::getGrid() const { 
-    return grid; 
+    return grid; //we return a varaible named grid of type vector<GridPoint2D>
 }
 
 int SpatialFieldEngine2D::getResX() const { 
