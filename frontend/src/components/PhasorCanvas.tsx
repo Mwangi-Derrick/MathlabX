@@ -28,8 +28,8 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     const omega = 2 * Math.PI * freq
 
     ctx.clearRect(0, 0, W, H)
-    // Dark mode fallback just in case, CSS should handle it
-    ctx.fillStyle = '#1a1e35ff'
+    // Use the theme's background color
+    ctx.fillStyle = '#0f172a' 
     ctx.fillRect(0, 0, W, H)
 
     // Center Crosshairs only
@@ -111,7 +111,7 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     const total = { real: vr.real + vl.real + vc.real, imag: vr.imag + vl.imag + vc.imag }
     drawPhasor(total, '#ef4444', 'ΣV')    // Red
 
-  }, [vs, vr, vl, vc, maxVal])
+  }, [vs, vr, vl, vc, maxVal, time, freq])
 
   return (
     <div className="phasor-wrap" style={{ textAlign: 'center' }}>

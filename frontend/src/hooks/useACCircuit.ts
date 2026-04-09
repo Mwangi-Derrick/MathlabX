@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { ACCircuitEngineInstance, Point2D } from '../lib/types'
+import type { ACCircuitEngineInstance, Point2D, PhasorState } from '../lib/types'
 import { createACCircuitEngine } from '../lib/wasmLoader'
 
 export interface ACCircuitState {
@@ -21,6 +21,8 @@ export interface ACCircuitState {
   }
   updateParams: (r: number, l: number, c: number, v: number, f: number) => void
   setSamples: (n: number) => void
+  getResonantCapacitance: () => number
+  getPhasorState: (time: number) => PhasorState | null
 }
 
 export function useACCircuit(start: number, end: number, samples: number): ACCircuitState {
@@ -110,6 +112,14 @@ export function useACCircuit(start: number, end: number, samples: number): ACCir
     engineRef.current?.setSamples(n)
   }, [])
 
+  const getResonantCapacitance = useCallback(() => {
+    return engineRef.current?.getResonantCapacitance() || 0
+  }, [])
+
+  const getPhasorState = useCallback((t: number): PhasorState | null => {
+    return engineRef.current?.getPhasorState(t) || null
+  }, [])
+
   return {
     loading,
     error,
@@ -117,6 +127,8 @@ export function useACCircuit(start: number, end: number, samples: number): ACCir
     currentPoints,
     metrics,
     updateParams,
-    setSamples
+    setSamples,
+    getResonantCapacitance,
+    getPhasorState
   }
 }

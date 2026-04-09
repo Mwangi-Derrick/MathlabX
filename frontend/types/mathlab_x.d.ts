@@ -108,22 +108,31 @@ export interface WaveEngineInstance {
  * Instance of the C++ ACCircuitEngine class.
  * Inherits from WaveEngine.
  */
+export interface PhasorState {
+  vs_real: number; vs_imag: number;
+  vr_real: number; vr_imag: number;
+  vl_real: number; vl_imag: number;
+  vc_real: number; vc_imag: number;
+}
+
 export interface ACCircuitEngineInstance extends WaveEngineInstance {
-  setCircuitParameters(resistance: number, inductance: number, capacitance: number): void
-  setSource(amplitude: number, freq: number): void
-  getOmega(): number
-  getInductiveReactance(): number
-  getCapacitiveReactance(): number
-  getImpedance(): number
-  getPhaseAngle(): number
-  getCurrentAmplitude(): number
-  getPowerFactor(): number
-  getRealPower(): number
-  getReactivePower(): number
-  getApparentPower(): number
-  generateWaves(): void
-  getVoltagePoints(): Point2DVector
-  getCurrentPoints(): Point2DVector
+  setCircuitParameters(r: number, l: number, c: number): void;
+  setSource(amplitude: number, freq: number): void;
+  getOmega(): number;
+  getInductiveReactance(): number;
+  getCapacitiveReactance(): number;
+  getImpedance(): number;
+  getPhaseAngle(): number;
+  getCurrentAmplitude(): number;
+  getPowerFactor(): number;
+  getRealPower(): number;
+  getReactivePower(): number;
+  getApparentPower(): number;
+  getResonantCapacitance(): number;
+  getPhasorState(omega_t: number): PhasorState;
+  generateWaves(): void;
+  getVoltagePoints(): Point2DVector;
+  getCurrentPoints(): Point2DVector;
 }
 
 /**

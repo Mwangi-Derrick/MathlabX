@@ -15,6 +15,7 @@ export type {
   GridPoint3DVector,
   WaveEngineInstance, 
   ACCircuitEngineInstance,
+  PhasorState,
   PhasorEngineInstance,
   FrequencyResponseEngineInstance,
   SpatialFieldEngine2DInstance,
