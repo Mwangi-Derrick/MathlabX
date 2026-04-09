@@ -11,7 +11,7 @@
 # Native CLI Configuration (Windows/MinGW)
 # ============================================================================
 CLI_CXX      = g++
-CLI_CXXFLAGS = -Wall -std=c++17 -O2
+CLI_CXXFLAGS = -Wall -std=c++17 -O2 -static
 CLI_INCLUDES = -Icpp-engine/math \
                -Icpp-engine/spatial \
                -Icpp-engine/time_domain \
@@ -103,7 +103,7 @@ cli: ensure-dirs $(CLI_TARGET)
 
 $(CLI_TARGET): $(CLI_OBJS)
 	@echo "Linking $@..."
-	$(CLI_CXX) $(CLI_OBJS) -o $(CLI_TARGET)
+	$(CLI_CXX) -static $(CLI_OBJS) -o $(CLI_TARGET)
 	@echo "$(GREEN)✓ Created $(CLI_TARGET)$(NC)"
 
 # Generic CLI compile rule: build/cli/path_with_underscores.o <- original src
