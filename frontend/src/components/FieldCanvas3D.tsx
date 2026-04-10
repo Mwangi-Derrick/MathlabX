@@ -67,9 +67,9 @@ const InstancedVectors: React.FC<{ grid: GridPoint3D[]; showCurl?: boolean }> = 
 
 export const FieldCanvas3D: React.FC<FieldCanvas3DProps> = ({ grid, showCurl }) => {
   return (
-    <div style={{ width: '100%', height: '100%', background: '#020617', borderRadius: '12px', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', background: '#000000', borderRadius: '12px', overflow: 'hidden' }}>
       <Canvas camera={{ position: [10, 10, 10], fov: 35 }}>
-        <color attach="background" args={['#020617']} />
+        <color attach="background" args={['#000000']} />
         
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />

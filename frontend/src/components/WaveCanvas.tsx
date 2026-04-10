@@ -96,15 +96,19 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     const W = rect.width
     const H = rect.height
 
-    // Resolve CSS colors for canvas
-    const bgColor = getCssVar('--bg-primary', '#0f172a')
+    // OscilloScope background is ALWAYS dark for that premium phosphor look
+    const bgColor = '#020617' 
     const gridColor = 'rgba(255,255,255,0.06)'
     const axisColor = 'rgba(255,255,255,0.15)'
     const textColor = 'rgba(255,255,255,0.3)'
 
-    // ─── Clear ──────────────────────────────────────────────────────
+    // ─── Clear / Phosphor Persistence ──────────────────────────────
+    // Instead of clearRect, we draw a semi-transparent overlay to provide 
+    // a "trail" effect similar to a digital phosphor oscilloscope.
     ctx.fillStyle = bgColor
+    ctx.globalAlpha = 0.4 // Adjust persistence here
     ctx.fillRect(0, 0, W, H)
+    ctx.globalAlpha = 1
 
     // ─── Grid ───────────────────────────────────────────────────────
     if (showGrid) {
@@ -324,6 +328,31 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
       ctx.fillText(`${amplitude}V`, W - 40, cy - ampY - 4)
       ctx.fillText(`-${amplitude}V`, W - 45, cy + ampY + 12)
     }
+
+    // ─── Synchronized Playhead ─────────────────────────────────────
+    // A vertical line that shows the current "instant" in space-time.
+    // Sync logic: (time * frequency % 1.0) maps rotation to canvas width.
+    const period = 1.0 / frequency
+    const normalizedTime = (time % period) / period
+    const playheadX = cx + normalizedTime * (W - cx - 10)
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([2, 2])
+    ctx.beginPath()
+    ctx.moveTo(playheadX, 0)
+    ctx.lineTo(playheadX, H)
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Playhead glowing cap
+    ctx.fillStyle = '#ffffff'
+    ctx.shadowColor = '#ffffff'
+    ctx.shadowBlur = 10
+    ctx.beginPath()
+    ctx.arc(playheadX, cy, 3, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.shadowBlur = 0
 
   }, [sinePoints, cosinePoints, waveMode, showGrid, time, amplitude, frequency, phase, maxAmplitude, getCssVar])
 

@@ -28,8 +28,8 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
     const omega = 2 * Math.PI * freq
 
     ctx.clearRect(0, 0, W, H)
-    // Use the theme's background color
-    ctx.fillStyle = '#0f172a' 
+    // Dark background for that high-contrast vector look
+    ctx.fillStyle = '#020617' 
     ctx.fillRect(0, 0, W, H)
 
     // Center Crosshairs only

@@ -24,7 +24,7 @@ export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, 
     const H = canvas.height = 600
     
     // ─── Background & Cinematic Grid ───────────────
-    ctx.fillStyle = '#020617'
+    ctx.fillStyle = '#000000'
     ctx.fillRect(0, 0, W, H)
 
     ctx.strokeStyle = '#1e293b'
