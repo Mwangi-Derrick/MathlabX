@@ -113,6 +113,12 @@ export interface PhasorState {
   vr_real: number; vr_imag: number;
   vl_real: number; vl_imag: number;
   vc_real: number; vc_imag: number;
+  omega: number;
+  frequency_hz: number;
+  phase_angle: number;
+  time_seconds: number;
+  current_peak: number;
+  source_peak: number;
 }
 
 export interface ACCircuitEngineInstance extends WaveEngineInstance {
@@ -129,7 +135,7 @@ export interface ACCircuitEngineInstance extends WaveEngineInstance {
   getReactivePower(): number;
   getApparentPower(): number;
   getResonantCapacitance(): number;
-  getPhasorState(omega_t: number): PhasorState;
+  getPhasorState(tSeconds: number): PhasorState;
   generateWaves(): void;
   getVoltagePoints(): Point2DVector;
   getCurrentPoints(): Point2DVector;
