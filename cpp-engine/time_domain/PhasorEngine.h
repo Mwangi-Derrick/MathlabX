@@ -22,8 +22,7 @@ public:
      * Get the Source Voltage Phasor (V = Vm ∠ 0)
      */
     Complex getVSourcePhasor() const {
-        // Vm is already peak amplitude
-        return Complex(100.0, 0); // Vm = 100 in default, we should get it from base
+        return Complex(Vm, 0);
     }
 
     /**
