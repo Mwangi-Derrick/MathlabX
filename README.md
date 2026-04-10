@@ -22,7 +22,9 @@ MathLabX strictly separates heavy mathematical computation (C++) from the UI ren
 
 ### 1. Numerical Kernel (C++)
 
-The engine is structured around two parallel class hierarchies — one for **time-domain** analysis and one for **spatial field** computation:
+The engine is structured around two parallel class hierarchies — one for **time-domain** analysis and one for **spatial field** computation. All mathematical computations are performed in C++ for maximum precision and performance.
+
+> 📝 **Deep Dive**: For a detailed mapping of EEE formulas to the C++ source code, see [**docs/MATH_KERNEL_DEEP_DIVE.md**](docs/MATH_KERNEL_DEEP_DIVE.md).
 
 #### Time-Domain Engine (`cpp-engine/time_domain/`)
 ```
