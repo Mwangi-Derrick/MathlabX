@@ -24,6 +24,7 @@
 #include "../math/vector_math.h"
 #include "../math/complex_math.h"
 #include "../time_domain/ACCircuitEngine.h"
+#include "../time_domain/FrequencyResponseEngine.h"
 #include "../time_domain/PhasorEngine.h"
 #include "../time_domain/WaveEngine.h"
 #include "../spatial/spatialEngine.h"
@@ -104,7 +105,18 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .field("vl_real", &PhasorState::vl_real)
         .field("vl_imag", &PhasorState::vl_imag)
         .field("vc_real", &PhasorState::vc_real)
-        .field("vc_imag", &PhasorState::vc_imag);
+        .field("vc_imag", &PhasorState::vc_imag)
+        .field("omega", &PhasorState::omega)
+        .field("frequency_hz", &PhasorState::frequency_hz)
+        .field("phase_angle", &PhasorState::phase_angle)
+        .field("time_seconds", &PhasorState::time_seconds)
+        .field("current_peak", &PhasorState::current_peak)
+        .field("source_peak", &PhasorState::source_peak);
+
+    emscripten::value_object<FrequencyPoint>("FrequencyPoint")
+        .field("freq", &FrequencyPoint::freq)
+        .field("gain_db", &FrequencyPoint::gain_db)
+        .field("phase_deg", &FrequencyPoint::phase_deg);
 
     emscripten::class_<WaveEngine>("WaveEngine")
         .function("setSamples", &WaveEngine::setSamples)
@@ -136,6 +148,16 @@ EMSCRIPTEN_BINDINGS(mathlab_x) {
         .function("getVRPhasor", &PhasorEngine::getVRPhasor)
         .function("getVLPhasor", &PhasorEngine::getVLPhasor)
         .function("getVCPhasor", &PhasorEngine::getVCPhasor);
+
+    emscripten::register_vector<FrequencyPoint>("FrequencyPointVector");
+
+    emscripten::class_<FrequencyResponseEngine, emscripten::base<ACCircuitEngine>>("FrequencyResponseEngine")
+        .constructor<double, double, int>()
+        .function("sweepFrequency", &FrequencyResponseEngine::sweepFrequency)
+        .function("getResponse", &FrequencyResponseEngine::getResponse)
+        .function("getResonantFrequency", &FrequencyResponseEngine::getResonantFrequency)
+        .function("getBandwidth", &FrequencyResponseEngine::getBandwidth)
+        .function("getQualityFactor", &FrequencyResponseEngine::getQualityFactor);
 
     // ── Spatial Structs ──
     emscripten::value_object<GridPoint2D>("GridPoint2D")
