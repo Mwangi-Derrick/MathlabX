@@ -36,6 +36,12 @@ struct PhasorState {
     double vr_real, vr_imag;
     double vl_real, vl_imag;
     double vc_real, vc_imag;
+    double omega;
+    double frequency_hz;
+    double phase_angle;
+    double time_seconds;
+    double current_peak;
+    double source_peak;
 };
 
 #endif // STRUCTS_H
