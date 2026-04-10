@@ -25,6 +25,7 @@ CLI_BUILD_DIR = build/cli
 
 CLI_SRCS = cmd/main.cpp \
            cpp-engine/time_domain/ACCircuitEngine.cpp \
+           cpp-engine/time_domain/FrequencyResponseEngine.cpp \
            cpp-engine/time_domain/WaveEngine.cpp \
            cpp-engine/spatial/curl.cpp \
            cpp-engine/spatial/divergence.cpp \
@@ -71,6 +72,7 @@ WASM_SRCS = cpp-engine/math/vector_math.cpp \
             cpp-engine/spatial/streamline.cpp \
             cpp-engine/spatial/Theorems.cpp \
             cpp-engine/time_domain/ACCircuitEngine.cpp \
+            cpp-engine/time_domain/FrequencyResponseEngine.cpp \
             cpp-engine/time_domain/WaveEngine.cpp \
             cpp-engine/bindings/mathlab_x.cpp
 
@@ -118,6 +120,9 @@ $(CLI_BUILD_DIR)/logging_JsonLogger.o: logging/JsonLogger.cpp
 	$(CLI_CXX) $(CLI_CXXFLAGS) $(CLI_INCLUDES) -c $< -o $@
 
 $(CLI_BUILD_DIR)/cpp-engine_time_domain_ACCircuitEngine.o: cpp-engine/time_domain/ACCircuitEngine.cpp
+	@echo "Compiling $<..."
+	$(CLI_CXX) $(CLI_CXXFLAGS) $(CLI_INCLUDES) -c $< -o $@
+$(CLI_BUILD_DIR)/cpp-engine_time_domain_FrequencyResponseEngine.o: cpp-engine/time_domain/FrequencyResponseEngine.cpp
 	@echo "Compiling $<..."
 	$(CLI_CXX) $(CLI_CXXFLAGS) $(CLI_INCLUDES) -c $< -o $@
 
@@ -177,6 +182,8 @@ $(WASM_BUILD_DIR)/cpp-engine_spatial_Theorems.o: cpp-engine/spatial/Theorems.cpp
 	$(WASM_CXX) $(WASM_CXXFLAGS) -c $< -o $@
 
 $(WASM_BUILD_DIR)/cpp-engine_time_domain_ACCircuitEngine.o: cpp-engine/time_domain/ACCircuitEngine.cpp
+	$(WASM_CXX) $(WASM_CXXFLAGS) -c $< -o $@
+$(WASM_BUILD_DIR)/cpp-engine_time_domain_FrequencyResponseEngine.o: cpp-engine/time_domain/FrequencyResponseEngine.cpp
 	$(WASM_CXX) $(WASM_CXXFLAGS) -c $< -o $@
 
 $(WASM_BUILD_DIR)/cpp-engine_time_domain_WaveEngine.o: cpp-engine/time_domain/WaveEngine.cpp
