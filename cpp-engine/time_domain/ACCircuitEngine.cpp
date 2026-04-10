@@ -25,14 +25,14 @@ ACCircuitEngine::ACCircuitEngine(double start, double end, int numSamples)
       R(50.0), L(0.05), C(0.0001), Vm(100.0), frequency(50.0) {}
 
 void ACCircuitEngine::setCircuitParameters(double resistance, double inductance, double capacitance) {
-    R = resistance < 0.001 ? 0.001 : resistance; 
-    L = inductance;
-    C = capacitance < 0.0000001 ? 0.0000001 : capacitance; 
+    R = std::clamp(resistance, 1e-6, 1e9);
+    L = std::clamp(inductance, 1e-9, 1e3);
+    C = std::clamp(capacitance, 1e-12, 1.0);
 }
 
 void ACCircuitEngine::setSource(double amplitude, double freq) {
-    Vm = amplitude;
-    frequency = freq > 0.1 ? freq : 0.1;
+    Vm = std::clamp(std::abs(amplitude), 0.0, 1e6);
+    frequency = std::clamp(freq, 1e-6, 1e9);
 }
 
 double ACCircuitEngine::getOmega() const { 
@@ -44,7 +44,11 @@ double ACCircuitEngine::getInductiveReactance() const {
 }
 
 double ACCircuitEngine::getCapacitiveReactance() const { 
-    return 1.0 / (getOmega() * C); 
+    const double denom = getOmega() * C;
+    if (std::abs(denom) < 1e-15) {
+        return 1e15;
+    }
+    return 1.0 / denom;
 }
 
 double ACCircuitEngine::getImpedance() const {
@@ -126,14 +130,16 @@ double ACCircuitEngine::getResonantCapacitance() const {
     return 1.0 / (omega * omega * L);
 }
 
-PhasorState ACCircuitEngine::getPhasorState(double t) const {
+PhasorState ACCircuitEngine::getPhasorState(double tSeconds) const {
     double omega = getOmega();
     double phi = getPhaseAngle();
     double im = getCurrentAmplitude();
-    double vs_angle = omega * t;
-    double vr_angle = omega * t - phi;
-    double vl_angle = omega * t - phi + (M_PI / 2.0);
-    double vc_angle = omega * t - phi - (M_PI / 2.0);
+    double xl = getInductiveReactance();
+    double xc = getCapacitiveReactance();
+    double vs_angle = omega * tSeconds;
+    double vr_angle = omega * tSeconds - phi;
+    double vl_angle = omega * tSeconds - phi + (M_PI / 2.0);
+    double vc_angle = omega * tSeconds - phi - (M_PI / 2.0);
 
     PhasorState state;
     state.vs_real = Vm * std::cos(vs_angle);
@@ -142,11 +148,17 @@ PhasorState ACCircuitEngine::getPhasorState(double t) const {
     state.vr_real = (im * R) * std::cos(vr_angle);
     state.vr_imag = (im * R) * std::sin(vr_angle);
     
-    state.vl_real = (im * getInductiveReactance()) * std::cos(vl_angle);
-    state.vl_imag = (im * getInductiveReactance()) * std::sin(vl_angle);
+    state.vl_real = (im * xl) * std::cos(vl_angle);
+    state.vl_imag = (im * xl) * std::sin(vl_angle);
     
-    state.vc_real = (im * getCapacitiveReactance()) * std::cos(vc_angle);
-    state.vc_imag = (im * getCapacitiveReactance()) * std::sin(vc_angle);
+    state.vc_real = (im * xc) * std::cos(vc_angle);
+    state.vc_imag = (im * xc) * std::sin(vc_angle);
+    state.omega = omega;
+    state.frequency_hz = frequency;
+    state.phase_angle = phi;
+    state.time_seconds = tSeconds;
+    state.current_peak = im;
+    state.source_peak = Vm;
     
     return state;
 }

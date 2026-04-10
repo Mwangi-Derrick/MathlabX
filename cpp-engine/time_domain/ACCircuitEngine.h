@@ -62,7 +62,7 @@ public:
     double getReactivePower() const;
     double getApparentPower() const;
     double getResonantCapacitance() const;
-    PhasorState getPhasorState(double omega_t) const;
+    PhasorState getPhasorState(double tSeconds) const;
 
     // ─── Wave Generation ───
     /**
