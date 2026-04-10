@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, Line, OrbitControls, Float, Text, MeshDistortMaterial } from '@react-three/drei'
+import { Html, Line, OrbitControls, Float, MeshDistortMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PhasorState } from '../lib/types'
 import type { FrequencyDomainState } from '../hooks/useFrequencyResponse'
@@ -40,8 +40,8 @@ const FrequencyResponseCurve: React.FC<{ analysis: FrequencyDomainState; current
   analysis, 
   currentFreq 
 }) => {
-  const curvePoints = useMemo(() => {
-    if (!analysis.response.length) return []
+  const { curvePoints, currentPoint } = useMemo(() => {
+    if (!analysis.response.length) return { curvePoints: [], currentPoint: null }
     // We map frequency response to a ring in the background (Z < 0)
     // Radius = gain (scaled), Angle = frequency (log or linear)
     const pts: [number, number, number][] = []
@@ -52,6 +52,9 @@ const FrequencyResponseCurve: React.FC<{ analysis: FrequencyDomainState; current
     const minG = Math.min(...gains)
     const maxG = Math.max(...gains)
     const rangeG = Math.max(1, maxG - minG)
+
+    let closestIdx = 0
+    let minDiff = Infinity
 
     analysis.response.forEach((p, i) => {
       const frac = i / (analysis.response.length - 1)
@@ -66,9 +69,16 @@ const FrequencyResponseCurve: React.FC<{ analysis: FrequencyDomainState; current
         Math.cos(angle) * radius,
         Z_OFFSET
       ])
+
+      const diff = Math.abs(p.freq - currentFreq)
+      if (diff < minDiff) {
+        minDiff = diff
+        closestIdx = i
+      }
     })
-    return pts
-  }, [analysis])
+
+    return { curvePoints: pts, currentPoint: pts[closestIdx] }
+  }, [analysis, currentFreq])
 
   if (!curvePoints.length) return null
 
@@ -81,7 +91,13 @@ const FrequencyResponseCurve: React.FC<{ analysis: FrequencyDomainState; current
         transparent 
         opacity={0.4} 
       />
-      {/* Markers for specific frequencies could go here */}
+      {currentPoint && (
+        <mesh position={currentPoint}>
+          <sphereGeometry args={[0.08, 16, 16]} />
+          <meshBasicMaterial color="#ffffff" />
+          <pointLight color={COLORS.resonance} intensity={2} distance={2} />
+        </mesh>
+      )}
     </group>
   )
 }
@@ -158,6 +174,29 @@ const PhasorArrow: React.FC<PhasorArrowProps> = ({
   )
 }
 
+// ---------------------------------------------------------------------------
+// ResonanceCore — A distorting energy sphere at the origin
+// ---------------------------------------------------------------------------
+const ResonanceCore: React.FC<{ active: boolean }> = ({ active }) => {
+  return (
+    <Float speed={active ? 10 : 2} rotationIntensity={2} floatIntensity={active ? 2 : 0.5}>
+      <mesh scale={active ? 0.35 : 0.08}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <MeshDistortMaterial
+          color={active ? COLORS.resonance : COLORS.axis}
+          speed={active ? 5 : 1}
+          distort={active ? 0.5 : 0.2}
+          radius={1}
+          emissive={active ? COLORS.resonance : '#000000'}
+          emissiveIntensity={active ? 5 : 0}
+          transparent
+          opacity={active ? 0.9 : 0.2}
+        />
+      </mesh>
+    </Float>
+  )
+}
+
 const TimeGrid: React.FC<{ radius: number }> = ({ radius }) => {
   const circles = useMemo(() => {
     const total = 6
@@ -180,14 +219,35 @@ const TimeGrid: React.FC<{ radius: number }> = ({ radius }) => {
         <Line key={idx} points={circle} color={COLORS.grid} lineWidth={1} transparent opacity={0.55} />
       ))}
 
-      <Html position={[AXIS_EXTENT + 0.2, 0, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600 }}>Re(V)</div>
+      <Html
+        position={[AXIS_EXTENT + 0.4, 0, 0]}
+        transform
+        distanceFactor={8}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+          Re(V)
+        </div>
       </Html>
-      <Html position={[0, AXIS_EXTENT + 0.2, 0]} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600 }}>Im(V)</div>
+      <Html
+        position={[0, AXIS_EXTENT + 0.4, 0]}
+        transform
+        distanceFactor={8}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+          Im(V)
+        </div>
       </Html>
-      <Html position={[0.12, 0.12, -TRAIL_SECONDS * TIME_AXIS_SCALE]} style={{ pointerEvents: 'none' }}>
-        <div style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600 }}>τ (time)</div>
+      <Html
+        position={[0.2, 0.2, -TRAIL_SECONDS * TIME_AXIS_SCALE]}
+        transform
+        distanceFactor={8}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+          Time (τ)
+        </div>
       </Html>
     </>
   )
@@ -290,6 +350,8 @@ const Scene: React.FC<SceneProps> = ({ phasorState, simTime, isCinematic, analys
         color={COLORS.resonance} 
         distance={10} 
       />
+
+      <ResonanceCore active={isResonant} />
 
       <TimeGrid radius={Math.max(0.45, toUnits(sourcePeak))} />
 
@@ -530,4 +592,3 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
     </div>
   )
 }
-
