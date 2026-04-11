@@ -368,7 +368,7 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     waveMode === 'cos' ? 'cos wave' : waveMode === 'both' ? 'overlay' : 'sin wave'
 
   return (
-    <div className="bg-[#020617] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-in-out hover:-translate-y-0.5 hover:border-blue-500 rounded-xl relative overflow-hidden h-full min-h-[500px]" ref={containerRef}>
+    <div className="bg-[#020617] relative overflow-hidden h-full w-full" ref={containerRef}>
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
       <div className="absolute top-[15px] left-[15px] text-white/50 text-[11px] font-mono tracking-wider z-10 pointer-events-none drop-shadow-md">
         {formulaLabel}

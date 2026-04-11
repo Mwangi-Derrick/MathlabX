@@ -7,6 +7,7 @@ import { ACSignalsPage } from './routes/ACSignalsPage'
 import { EMFieldPage } from './routes/EMFieldPage'
 import { PhasorPage } from './routes/PhasorPage'
 import { VectorCalcPage } from './routes/VectorCalcPage'
+import './index.css'
 
 export interface PageProps {
   uiMode: 'basic' | 'advanced'
@@ -139,7 +140,13 @@ export const App: React.FC = () => {
         </div>
 
         {/* Main Canvas Area */}
-        <div className="flex flex-1 relative bg-black overflow-hidden">
+        <div className="flex flex-1 relative bg-black overflow-hidden flex-col">
+          {/* Subtle Global Header */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center justify-center">
+            <h1 className="text-text-muted font-bold tracking-[0.2em] shadow-lg shadow-black/50 uppercase text-[10px] md:text-[12px] bg-surface/40 md:bg-surface/20 px-4 py-1.5 rounded-full border border-border-secondary backdrop-blur-xl">
+              MathlabX <span className="text-blue-500/80 mx-2">/</span> <span className="text-white/80">{modules.find(m => m.id === activeModule)?.label}</span>
+            </h1>
+          </div>
           <CurrentComponent uiMode={uiMode} />
         </div>
       </div>

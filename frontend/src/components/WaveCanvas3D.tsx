@@ -465,7 +465,7 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
   const phaseDeg = phasorState ? (phasorState.phase_angle * 180) / Math.PI : 0
 
   return (
-    <div className="w-full h-full min-h-[460px] rounded-xl overflow-hidden bg-black relative border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+    <div className="w-full h-full overflow-hidden bg-black relative">
       <Canvas camera={{ position: [0, 0.4, 8], fov: 46 }} dpr={[1, 2]} gl={{ antialias: true }}>
         <color attach="background" args={['#000000']} />
         {phasorState ? (

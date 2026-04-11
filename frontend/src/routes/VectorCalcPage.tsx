@@ -31,7 +31,7 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
-  if (loading) return <div className="loading-screen">Initializing Vector Calc Engine...</div>
+  if (loading) return <div className="h-full w-full flex items-center justify-center text-white bg-black">Initializing Vector Calc Engine...</div>
 
   return (
     <div className="flex flex-1 relative overflow-hidden bg-black w-full h-full">
@@ -54,31 +54,31 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
 
       {/* Right Sidebar - Docked, Collapsible */}
       <div 
-        className={`h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
-          isSidebarOpen ? 'w-[320px] md:w-[380px]' : 'w-12'
+        className={`fixed md:relative top-0 right-0 h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
+          isSidebarOpen ? 'w-[calc(100%-48px)] md:w-[380px] translate-x-0' : 'w-[calc(100%-48px)] md:w-12 translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="h-12 border-b border-border-primary flex items-center shrink-0">
+        <div className="h-12 border-b border-border-primary flex items-center shrink-0 absolute md:static -left-12 md:left-0 top-0 bg-surface/95 md:bg-transparent backdrop-blur-2xl md:backdrop-blur-none border-l md:border-l-0 shadow-[-5px_0_15px_rgba(0,0,0,0.2)] md:shadow-none transition-all">
           <button 
-            className="w-12 h-full flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
+            className="w-12 h-12 flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? "Collapse Properties" : "Expand Properties"}
           >
-            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180 md:rotate-180' : 'rotate-180 md:rotate-0'}`}>
               <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
             </svg>
           </button>
           
-          <div className={`overflow-hidden transition-opacity duration-300 whitespace-nowrap ${isSidebarOpen ? 'opacity-100 flex-1 px-2' : 'opacity-0 w-0'}`}>
+          <div className="overflow-hidden whitespace-nowrap flex-1 px-4 md:px-2">
             <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-text-tertiary">Inspector</span>
           </div>
         </div>
 
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'} transition-opacity duration-300 delay-100`}>
-          <div className="p-5 flex flex-col gap-6">
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden transition-opacity duration-300 delay-100`}>
+          <div className="p-4 md:p-5 flex flex-col gap-4 md:gap-6 pt-16 md:pt-5">
             
-            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
-              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+            <div className="bg-elevated rounded-xl p-4 md:p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 md:mb-5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_theme(colors.blue.500)]"></span> Operator
               </div>
               <div className="flex flex-col gap-2">
@@ -88,11 +88,11 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
               </div>
             </div>
 
-            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
-              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+            <div className="bg-elevated rounded-xl p-4 md:p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 md:mb-5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_theme(colors.indigo.500)]"></span> Field Preset
               </div>
-              <select value={preset} onChange={(e) => setPreset(e.target.value)} className="w-full p-2.5 text-[12px] bg-secondary focus:bg-elevated focus:ring-1 focus:ring-blue-500 text-text-primary border border-border-secondary rounded-lg outline-none transition-all shadow-inner font-medium">
+              <select value={preset} onChange={(e) => setPreset(e.target.value)} className="w-full p-2.5 text-[11px] md:text-[12px] bg-secondary focus:bg-elevated focus:ring-1 focus:ring-blue-500 text-text-primary border border-border-secondary rounded-lg outline-none transition-all shadow-inner font-medium">
                 <option value="source">Radial (Source)</option>
                 <option value="rotation">Swirl (Rotation)</option>
                 <option value="sink">Sink Field</option>
@@ -101,25 +101,25 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
               </select>
             </div>
 
-            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
-              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+            <div className="bg-elevated rounded-xl p-4 md:p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 md:mb-5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_theme(colors.emerald.500)]"></span> Parameters
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 md:gap-4">
                 <Slider label="Scale X" value={ax} min={-2} max={2} step={0.1} onChange={setAx} />
                 <Slider label="Scale Y" value={ay} min={-2} max={2} step={0.1} onChange={setAy} />
                 <Slider label="Resolution X" value={resX} min={5} max={50} step={1} onChange={setResX} />
                 <Slider label="Resolution Y" value={resY} min={5} max={50} step={1} onChange={setResY} />
               </div>
               
-              <div className="mt-6 pt-5 border-t border-border-secondary flex flex-row items-center justify-between">
+              <div className="mt-4 md:mt-6 pt-4 md:pt-5 border-t border-border-secondary flex flex-row items-center justify-between">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">Stream Traces:</span>
                 <button 
                   onClick={() => {
                     if (streamlines.length > 0) clearStreamlines()
                     else computeStreamlines(preset, ax, ay)
                   }}
-                  className={`px-4 py-2 text-[10px] uppercase tracking-wider font-bold rounded-lg transition-all shadow-sm ${streamlines.length > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-blue-600/20 text-blue-400 hover:text-white border border-blue-500 hover:bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'}`}
+                  className={`px-3 md:px-4 py-2 text-[10px] uppercase tracking-wider font-bold rounded-lg transition-all shadow-sm ${streamlines.length > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-blue-600/20 text-blue-400 hover:text-white border border-blue-500 hover:bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'}`}
                 >
                   {streamlines.length > 0 ? 'Clear Traces' : 'Trace Grid'}
                 </button>
@@ -136,17 +136,17 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
             )}
 
             {uiMode === 'advanced' && (
-              <div className="flex flex-col gap-6">
-                <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="flex flex-col gap-4 md:gap-6">
+                <div className="bg-elevated rounded-xl p-4 md:p-5 border border-border-subtle shadow-sm">
                   <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_5px_theme(colors.purple.500)]"></span> Reference
                   </div>
-                  <div className="bg-black/50 rounded-lg py-3 px-3 font-mono text-[12px] text-blue-400 mb-4 border border-border-secondary shadow-inner">
+                  <div className="bg-black/50 rounded-lg py-2.5 md:py-3 px-3 font-mono text-[11px] md:text-[12px] text-blue-400 mb-3 md:mb-4 border border-border-secondary shadow-inner">
                     {opType === 'div' && '∇·F = ∂Fx/∂x + ∂Fy/∂y'}
                     {opType === 'curl' && '(∇×F)z = ∂Fy/∂x - ∂Fx/∂y'}
                     {opType === 'grad' && '∇V = (∂V/∂x)i + (∂V/∂y)j'}
                   </div>
-                  <p className="text-[11px] leading-relaxed text-text-muted">
+                  <p className="text-[10px] md:text-[11px] leading-relaxed text-text-muted">
                     {opType === 'div' && 'Red arrows indicate Source (+div), Green indicate Sink (-div).'}
                     {opType === 'curl' && 'Orange indicates CW rotation, Purple indicates CCW rotation.'}
                     {opType === 'grad' && 'Vectors point in direction of steepest increase.'}
@@ -154,26 +154,26 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
                 </div>
 
                 {opType === 'curl' && (
-                  <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                  <div className="bg-elevated rounded-xl p-4 md:p-5 border border-border-subtle shadow-sm">
                     <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_5px_theme(colors.amber.500)]"></span> Green's Theorem
                     </div>
-                    <p className="text-[11px] leading-relaxed text-text-muted mb-4">
+                    <p className="text-[10px] md:text-[11px] leading-relaxed text-text-muted mb-4">
                       Click and drag a box on the canvas field to evaluate the line integral along its boundary vs the area integral.
                     </p>
                     {theoremResult && (
-                      <div className="bg-secondary border border-border-secondary p-4 rounded-lg space-y-3 shadow-inner">
-                        <div className="text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
+                      <div className="bg-secondary border border-border-secondary p-3 md:p-4 rounded-lg space-y-2 md:space-y-3 shadow-inner">
+                        <div className="text-[10px] md:text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
                           <span className="font-semibold">∮ F·dr:</span> 
-                          <span className="font-mono text-[13px] text-blue-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.lineIntegral.toFixed(4)}</span>
+                          <span className="font-mono text-[12px] md:text-[13px] text-blue-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.lineIntegral.toFixed(4)}</span>
                         </div>
-                        <div className="text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
+                        <div className="text-[10px] md:text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
                           <span className="font-semibold">∬ (∇×F)z dA:</span> 
-                          <span className="font-mono text-[13px] text-purple-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.areaIntegral.toFixed(4)}</span>
+                          <span className="font-mono text-[12px] md:text-[13px] text-purple-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.areaIntegral.toFixed(4)}</span>
                         </div>
-                        <div className="text-[11px] mt-3 pt-3 border-t border-border-secondary text-right font-bold flex justify-between tracking-wider items-center">
+                        <div className="text-[10px] md:text-[11px] mt-3 pt-3 border-t border-border-secondary text-right font-bold flex justify-between tracking-wider items-center">
                           <span className="text-text-tertiary uppercase">Result</span>
-                          <span className={`${theoremResult.matches ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10'} px-2.5 py-1 rounded-md uppercase text-[10px]`}>
+                          <span className={`${theoremResult.matches ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10'} px-2 py-1 rounded-md uppercase text-[10px]`}>
                             {theoremResult.matches ? '✓ Verified' : '✗ Mismatch'}
                           </span>
                         </div>
