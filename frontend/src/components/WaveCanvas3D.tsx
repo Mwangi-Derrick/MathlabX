@@ -514,7 +514,7 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
 
       <button
         onClick={() => setIsCinematic((prev) => !prev)}
-        className={`absolute right-4 bottom-4 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.04em] cursor-pointer z-20 transition-colors ${isCinematic ? 'border-[#22d3ee] bg-[#22d3ee]/15 text-[#22d3ee]' : 'border-white/25 bg-white/5 text-white'}`}
+        className={`absolute right-4 bottom-16 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.04em] cursor-pointer z-20 transition-colors ${isCinematic ? 'border-[#22d3ee] bg-[#22d3ee]/15 text-[#22d3ee]' : 'border-white/25 bg-white/5 text-white'}`}
       >
         {isCinematic ? '🎬 CINEMATIC CAMERA' : '📷 MANUAL ORBIT'}
       </button>

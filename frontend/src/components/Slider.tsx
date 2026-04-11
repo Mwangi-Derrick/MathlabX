@@ -25,7 +25,7 @@ export const Slider: React.FC<SliderProps> = ({
   formatValue = (val) => String(val),
 }) => {
   return (
-    <div className="px-4 py-3">
+    <div className="py-2.5">
       <div className="flex justify-between items-center mb-2">
         <span className="text-[12px] text-text-secondary font-medium tracking-wide">{label}</span>
         <span className="text-[12px] font-bold text-blue-400 font-mono tracking-wider">{formatValue(value)}</span>

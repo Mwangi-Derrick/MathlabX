@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSpatialEngine3D } from '../hooks/useSpatialEngine'
 import { FieldCanvas3D } from '../components/FieldCanvas3D'
 import { Slider } from '../components/Slider'
-import { ToggleButton } from '../components/ToggleButton'
+// import { ToggleButton } from '../components/ToggleButton'
 import { MetricCard } from '../components/MetricCard'
 import { PageProps } from '../App'
 
@@ -36,9 +36,9 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
   }
 
   return (
-    <div className="flex flex-1 relative overflow-hidden bg-black w-full h-full">
+    <div className="flex flex-col md:flex-row flex-1 relative overflow-hidden bg-black w-full h-full min-h-0">
       {/* Center Canvas Area (Full width) */}
-      <div className="flex-1 relative bg-black flex flex-col overflow-hidden z-0">
+      <div className="flex-1 relative bg-black flex flex-col overflow-hidden z-0 min-h-0">
         <div className="flex-1 relative p-1 lg:p-4 bg-black flex items-center justify-center min-h-0">
           {grid && grid.length > 0 ? (
             <FieldCanvas3D grid={grid} showCurl={showCurl} />
@@ -48,30 +48,36 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
         </div>
         
         {/* Bottom Status overlay */}
-        <div className="absolute bottom-0 left-0 w-full h-12 flex items-center px-6 pointer-events-none z-10 bg-gradient-to-t from-black/90 to-transparent pb-2">
-          <div className="ml-auto text-[10px] text-text-muted font-mono uppercase tracking-wider">Three.js + WASM Spatial Kernel</div>
+        <div className="absolute bottom-0 left-0 w-full h-12 flex items-center px-4 md:px-6 pointer-events-none z-10 bg-gradient-to-t from-black/90 to-transparent pb-2">
+          <div className="ml-auto text-[9px] md:text-[10px] text-text-muted font-mono uppercase tracking-wider">Three.js + WASM Spatial Kernel</div>
         </div>
       </div>
 
-      {/* Right Sidebar - Docked, Collapsible */}
+      {/* Responsive Inspector Sidebar / Bottom Drawer */}
       <div 
-        className={`fixed md:relative top-0 right-0 h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
-          isSidebarOpen ? 'w-[calc(100%-48px)] md:w-[380px] translate-x-0' : 'w-[calc(100%-48px)] md:w-12 translate-x-full md:translate-x-0'
+        className={`md:relative md:h-full bg-surface/95 backdrop-blur-2xl border-t md:border-t-0 md:border-l border-border-primary md:shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
+          isSidebarOpen ? 'h-[45vh] md:w-[380px] md:translate-x-0' : 'h-12 md:w-12 md:translate-x-0'
         }`}
       >
-        <div className="h-12 border-b border-border-primary flex items-center shrink-0 absolute md:static -left-12 md:left-0 top-0 bg-surface/95 md:bg-transparent backdrop-blur-2xl md:backdrop-blur-none border-l md:border-l-0 shadow-[-5px_0_15px_rgba(0,0,0,0.2)] md:shadow-none transition-all">
+        <div className="h-12 border-b border-border-primary flex items-center shrink-0 w-full bg-surface/95 md:bg-transparent backdrop-blur-2xl md:backdrop-blur-none transition-all cursor-pointer md:cursor-auto" onClick={() => { if(window.innerWidth < 768) setIsSidebarOpen(!isSidebarOpen) }}>
           <button 
             className="w-12 h-12 flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(!isSidebarOpen); }}
             title={isSidebarOpen ? "Collapse Properties" : "Expand Properties"}
           >
-            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180 md:rotate-180' : 'rotate-180 md:rotate-0'}`}>
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? '-rotate-90 md:rotate-180' : 'rotate-90 md:rotate-0'}`}>
               <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
             </svg>
           </button>
           
-          <div className="overflow-hidden whitespace-nowrap flex-1 px-4 md:px-2">
+          <div className="overflow-hidden whitespace-nowrap flex-1 px-2 md:px-2 flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-text-tertiary">Inspector</span>
+            {/* Mobile quick summary when collapsed */}
+            {!isSidebarOpen && (
+              <span className="md:hidden text-[10px] text-text-muted font-mono px-2">
+                Preset: {preset} • Res: {resX}x{resY}x{resZ}
+              </span>
+            )}
           </div>
         </div>
 
