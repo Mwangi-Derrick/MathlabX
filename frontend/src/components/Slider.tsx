@@ -25,13 +25,14 @@ export const Slider: React.FC<SliderProps> = ({
   formatValue = (val) => String(val),
 }) => {
   return (
-    <div className="slider-group">
-      <div className="slider-header">
-        <span className="slider-label">{label}</span>
-        <span className="slider-value">{formatValue(value)}</span>
+    <div className="mb-[14px]">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-[12px] text-text-secondary font-medium">{label}</span>
+        <span className="text-[12px] font-medium text-text-primary font-mono">{formatValue(value)}</span>
       </div>
       <input
         type="range"
+        className="w-full h-1 bg-border-primary rounded-sm appearance-none cursor-pointer outline-none accent-blue-500"
         min={min}
         max={max}
         step={step}

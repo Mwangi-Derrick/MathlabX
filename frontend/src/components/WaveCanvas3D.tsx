@@ -465,18 +465,7 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
   const phaseDeg = phasorState ? (phasorState.phase_angle * 180) / Math.PI : 0
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        minHeight: 460,
-        borderRadius: 12,
-        overflow: 'hidden',
-        background: '#000000',
-        position: 'relative',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
+    <div className="w-full h-full min-h-[460px] rounded-xl overflow-hidden bg-black relative border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
       <Canvas camera={{ position: [0, 0.4, 8], fov: 46 }} dpr={[1, 2]} gl={{ antialias: true }}>
         <color attach="background" args={['#000000']} />
         {phasorState ? (
@@ -490,42 +479,13 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
       </Canvas>
 
       {!phasorState && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: 12,
-            letterSpacing: '0.05em',
-          }}
-        >
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70 text-[12px] tracking-[0.05em] bg-black">
           Waiting for phasor state from C++ kernel...
         </div>
       )}
 
       {/* Floating Stats Panel */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '1rem',
-          left: '1rem',
-          padding: '0.7rem 0.9rem',
-          borderRadius: 8,
-          border: '1px solid rgba(255,255,255,0.12)',
-          background: 'rgba(2,6,23,0.75)',
-          color: 'rgba(255,255,255,0.85)',
-          fontSize: 11,
-          fontFamily: 'JetBrains Mono, monospace',
-          display: 'grid',
-          gap: 4,
-          minWidth: 180,
-          backdropFilter: 'blur(4px)',
-          zIndex: 10
-        }}
-      >
+      <div className="absolute top-4 left-4 px-3.5 py-2.5 rounded-lg border border-white/10 bg-[#020617]/75 text-white/85 text-[11px] font-mono grid gap-1 min-w-[180px] backdrop-blur-md z-10">
         <div style={{ color: COLORS.vs }}>Source: {(phasorState?.vs_real ?? 0).toFixed(1)}V peak</div>
         <div>ω: {omega.toFixed(2)} rad/s</div>
         <div>f: {(phasorState?.frequency_hz ?? 0).toFixed(2)} Hz</div>
@@ -538,24 +498,7 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
         <div style={{ fontSize: 9, opacity: 0.6, marginTop: 4 }}>KVL Error: {closureErrorVolts.toExponential(2)}V</div>
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          padding: '0.65rem 0.85rem',
-          borderRadius: 8,
-          border: '1px solid rgba(255,255,255,0.1)',
-          background: 'rgba(2,6,23,0.72)',
-          color: 'rgba(255,255,255,0.8)',
-          fontSize: 11,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          backdropFilter: 'blur(4px)',
-          zIndex: 10
-        }}
-      >
+      <div className="absolute top-4 right-4 px-3 py-2.5 rounded-lg border border-white/10 bg-[#020617]/75 text-white/80 text-[11px] flex flex-col gap-1.5 backdrop-blur-md z-10">
         {([
           [COLORS.vs, 'VS source'],
           [COLORS.vr, 'VR resistor'],
@@ -571,21 +514,7 @@ export const WaveCanvas3D: React.FC<WaveCanvas3DProps> = ({ phasorState, simTime
 
       <button
         onClick={() => setIsCinematic((prev) => !prev)}
-        style={{
-          position: 'absolute',
-          right: '1rem',
-          bottom: '1rem',
-          borderRadius: 999,
-          border: `1px solid ${isCinematic ? '#22d3ee' : 'rgba(255,255,255,0.25)'}`,
-          background: isCinematic ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.04)',
-          color: isCinematic ? '#22d3ee' : '#f8fafc',
-          padding: '7px 14px',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.04em',
-          cursor: 'pointer',
-          zIndex: 20,
-        }}
+        className={`absolute right-4 bottom-4 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-[0.04em] cursor-pointer z-20 transition-colors ${isCinematic ? 'border-[#22d3ee] bg-[#22d3ee]/15 text-[#22d3ee]' : 'border-white/25 bg-white/5 text-white'}`}
       >
         {isCinematic ? '🎬 CINEMATIC CAMERA' : '📷 MANUAL ORBIT'}
       </button>

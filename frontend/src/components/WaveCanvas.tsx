@@ -368,10 +368,14 @@ export const WaveCanvas: React.FC<WaveCanvasProps> = ({
     waveMode === 'cos' ? 'cos wave' : waveMode === 'both' ? 'overlay' : 'sin wave'
 
   return (
-    <div className="canvas-wrap" ref={containerRef}>
-      <canvas ref={canvasRef} />
-      <div className="canvas-label">{formulaLabel}</div>
-      <div className={`canvas-badge mode-${waveMode}`}>{badgeText}</div>
+    <div className="bg-[#020617] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-in-out hover:-translate-y-0.5 hover:border-blue-500 rounded-xl relative overflow-hidden h-full min-h-[500px]" ref={containerRef}>
+      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+      <div className="absolute top-[15px] left-[15px] text-white/50 text-[11px] font-mono tracking-wider z-10 pointer-events-none drop-shadow-md">
+        {formulaLabel}
+      </div>
+      <div className={`bg-black/50 backdrop-blur border border-white/10 text-text-secondary uppercase tracking-[0.1em] font-bold absolute bottom-[15px] right-[15px] text-[10px] py-[3px] px-[10px] rounded-full z-10 pointer-events-none ${waveMode === 'cos' ? 'text-amber-400 border-amber-400/30' : waveMode === 'sin' ? 'text-cyan-400 border-cyan-400/30' : 'text-purple-400 border-purple-400/30'}`}>
+        {badgeText}
+      </div>
     </div>
   )
 }

@@ -26,80 +26,84 @@ export const EMFieldPage: React.FC<PageProps> = ({ uiMode }) => {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="loader" />
-        <p>Initializing 3D Spatial Kernel...</p>
+      <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-b from-secondary to-primary">
+        <div className="w-12 h-12 border-[3px] border-border-primary border-t-blue-500 rounded-full animate-[spin_0.8s_linear_infinite] mb-4" />
+        <p className="text-text-secondary text-[14px]">Initializing 3D Spatial Kernel...</p>
       </div>
     )
   }
 
   return (
-    <div className="main-layout">
-      <div className="sidebar">
-        <div className="section-group">
-          <div className="section-label">Presets</div>
-          <div className="wave-toggle">
+    <div className="grid grid-cols-[220px_1fr_200px] flex-1 overflow-hidden">
+      <div className="bg-primary border-r border-border-primary py-4 px-3 overflow-y-auto">
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Presets</div>
+          <div className="flex gap-1 mb-3">
             <ToggleButton label="Swirl" isActive={preset === 'swirl'} onClick={() => setPreset('swirl')} />
             <ToggleButton label="Radial" isActive={preset === 'radial'} onClick={() => setPreset('radial')} />
             <ToggleButton label="Custom" isActive={preset === 'custom'} onClick={() => setPreset('custom')} />
           </div>
         </div>
 
-        <div className='section-group'>
-         <div className='section-label'>Resolution</div>
-         <div className='section-content'>
+        <div className="mb-5">
+         <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Resolution</div>
+         <div>
           <Slider label="Res X" value={resX} min={0} max={50} step={1} onChange={setResX} />
           <Slider label="Res Y" value={resY} min={0} max={50} step={1} onChange={setResY} />
           <Slider label="Res Z" value={resZ} min={0} max={50} step={1} onChange={setResZ} />
          </div>
         </div>
 
-        <div className="section-group">
-          <div className="section-label">Field Parameters</div>
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Field Parameters</div>
           <Slider label="Amp X" value={ax} min={0} max={5} step={0.1} onChange={setAx} />
           <Slider label="Amp Y" value={ay} min={0} max={5} step={0.1} onChange={setAy} />
           <Slider label="Amp Z" value={az} min={0} max={5} step={0.1} onChange={setAz} />
         </div>
 
-        <div className="section-group">
-          <div className="section-label">Visualization</div>
-          <div className="wave-toggle">
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Visualization</div>
+          <div className="flex gap-1 mb-3">
             <ToggleButton label="Show Curl" isActive={showCurl} onClick={() => setShowCurl(!showCurl)} />
           </div>
         </div>
       </div>
 
-      <div className="canvas-area">
-        <div className="canvas-container">
+      <div className="bg-black flex flex-col overflow-hidden">
+        <div className="flex-1 relative p-4 min-h-0 bg-black">
           {grid && grid.length > 0 ? (
             <FieldCanvas3D grid={grid} showCurl={showCurl} />
           ) : (
-            <div className="status-message">Computing Field Gradients...</div>
+            <div className="text-text-muted absolute inset-0 flex items-center justify-center">Computing Field Gradients...</div>
           )}
         </div>
-        <div className="status-bar">
-          <div className="status-bar-engine">Three.js + WASM Spatial Kernel</div>
+        <div className="h-9 border-t border-border-primary flex items-center gap-4 px-4 bg-primary shrink-0">
+          <div className="ml-auto text-[10px] text-text-muted font-mono">Three.js + WASM Spatial Kernel</div>
         </div>
       </div>
 
-      <div className="sidebar-right">
-        <div className={uiMode === 'basic' ? 'ui-visible' : 'ui-hidden'}>
-          <div className="section-label">Summary</div>
-          <MetricCard label="Visual Mode" value="Interactive 3D" />
-          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-            Real-time vector field visualization using C++ compute.
-          </p>
-        </div>
-
-        <div className={uiMode === 'advanced' ? 'ui-visible' : 'ui-hidden'}>
-          <div className="section-label">Theory: Curl</div>
-          <div className="formula-box">
-            ∇ × F = (∂Fz/∂y - ∂Fy/∂z)i + ...
+      <div className="bg-primary border-l border-border-primary py-3.5 px-3 overflow-y-auto flex flex-col gap-3">
+        {uiMode === 'basic' && (
+          <div>
+            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Summary</div>
+            <MetricCard label="Visual Mode" value="Interactive 3D" unit="" />
+            <p className="text-[11px] text-text-tertiary mt-2">
+              Real-time vector field visualization using C++ compute.
+            </p>
           </div>
-          <p style={{ fontSize: '11px', lineHeight: '1.4' }}>
-            Adjust parameters to see how curl relates to field rotation.
-          </p>
-        </div>
+        )}
+
+        {uiMode === 'advanced' && (
+          <div>
+            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Theory: Curl</div>
+            <div className="bg-blue-600/5 border-l-2 border-blue-600 rounded-r-sm py-1.5 px-2.5 font-mono text-[11px] text-blue-400 mb-1.5">
+              ∇ × F = (∂Fz/∂y - ∂Fy/∂z)i + ...
+            </div>
+            <p className="text-[11px] leading-[1.4] text-text-secondary">
+              Adjust parameters to see how curl relates to field rotation.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

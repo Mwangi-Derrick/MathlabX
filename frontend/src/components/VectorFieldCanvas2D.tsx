@@ -159,15 +159,17 @@ export const VectorFieldCanvas2D: React.FC<VectorFieldCanvas2DProps> = ({ grid, 
   }
 
   return (
-    <div className="canvas-wrap" style={{ display: 'inline-block' }}>
+    <div className="bg-[#020617] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-in-out hover:-translate-y-0.5 hover:border-blue-500 rounded-xl relative overflow-hidden inline-block w-full h-full">
       <canvas 
         ref={canvasRef} 
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        style={{ cursor: 'crosshair', border: '2px solid rgba(30, 41, 59, 0.5)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }} 
+        style={{ cursor: 'crosshair', width: '100%', height: '100%', background: '#000000', borderRadius: '12px' }} 
       />
-      <div className="canvas-badge" style={{ bottom: '15px', right: '15px' }}>{type.toUpperCase()} FIELD</div>
+      <div className="bg-black/50 backdrop-blur border border-white/10 text-text-secondary uppercase tracking-[0.1em] font-bold absolute bottom-[15px] right-[15px] text-[10px] py-[3px] px-[10px] rounded-full z-10 pointer-events-none">
+        {type.toUpperCase()} FIELD
+      </div>
     </div>
   )
 }

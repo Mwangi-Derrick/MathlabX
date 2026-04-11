@@ -136,10 +136,10 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
   if (error) return <div>Error: {error}</div>
 
   return (
-    <div className="main-layout">
-      <div className="sidebar">
-        <div className="section-group">
-          <div className="section-label">Source</div>
+    <div className="grid grid-cols-[220px_1fr_200px] flex-1 overflow-hidden">
+      <div className="bg-primary border-r border-border-primary py-4 px-3 overflow-y-auto">
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Source</div>
           <Slider
             label="Voltage Vm"
             value={amplitude}
@@ -160,8 +160,8 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           />
         </div>
 
-        <div className="section-group">
-          <div className="section-label">Load (RLC)</div>
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Load (RLC)</div>
           <Slider
             label="Resistance R"
             value={resistance}
@@ -191,8 +191,8 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           />
         </div>
 
-        <div className="section-group">
-          <div className="section-label">Simulation</div>
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Simulation</div>
           <Slider
             label="Sim Speed"
             value={simSpeed}
@@ -214,20 +214,20 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
         </div>
       </div>
 
-      <div className="canvas-area">
-        <div className="header-actions">
-          <div className="view-toggle">
-            <button className={viewMode === '3d' ? 'active' : ''} onClick={() => setViewMode('3d')}>
+      <div className="bg-black flex flex-col overflow-hidden relative">
+        <div className="flex justify-between items-center px-4 py-3 absolute top-0 w-full z-10 pointer-events-none">
+          <div className="flex gap-1 bg-primary/80 backdrop-blur-md rounded border border-border-primary p-1 pointer-events-auto">
+            <button className={`px-3 py-1 rounded text-[11px] font-semibold transition-all ${viewMode === '3d' ? 'bg-blue-600 text-white' : 'text-text-secondary hover:bg-secondary'}`} onClick={() => setViewMode('3d')}>
               4D Phasor-Time
             </button>
-            <button className={viewMode === '2d' ? 'active' : ''} onClick={() => setViewMode('2d')}>
+            <button className={`px-3 py-1 rounded text-[11px] font-semibold transition-all ${viewMode === '2d' ? 'bg-blue-600 text-white' : 'text-text-secondary hover:bg-secondary'}`} onClick={() => setViewMode('2d')}>
               Oscilloscope
             </button>
           </div>
-          {isResonant && <div className="resonance-badge">RESONANCE LOCK</div>}
+          {isResonant && <div className="px-2 py-1 rounded bg-orange-500/20 text-orange-400 text-[10px] uppercase font-bold border border-orange-500/50">RESONANCE LOCK</div>}
         </div>
 
-        <div className="canvas-container" style={{ height: '500px' }}>
+        <div className="flex-1 relative p-4 min-h-0 bg-black pt-12">
           {viewMode === '3d' ? (
             <WaveCanvas3D phasorState={phasorState} simTime={time} analysis={freqAnalysis} />
           ) : (
@@ -245,27 +245,27 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           )}
         </div>
 
-        <div className="status-bar">
-          <div className="stat-item">
-            <div className="stat-dot" style={{ background: '#22d3ee' }} />
-            <span className="stat-key">V(t) peak</span>
-            <span className="stat-value">{amplitude.toFixed(1)}V</span>
+        <div className="h-9 border-t border-border-primary flex items-center gap-4 px-4 bg-primary shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
+            <span className="text-[11px] text-text-tertiary">V(t) peak</span>
+            <span className="text-[11px] font-semibold text-text-primary font-mono">{amplitude.toFixed(1)}V</span>
           </div>
-          <div className="stat-item">
-            <div className="stat-dot" style={{ background: '#fbbf24' }} />
-            <span className="stat-key">I(t) peak</span>
-            <span className="stat-value">{metrics.currentAmplitude.toFixed(3)}A</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]" />
+            <span className="text-[11px] text-text-tertiary">I(t) peak</span>
+            <span className="text-[11px] font-semibold text-text-primary font-mono">{metrics.currentAmplitude.toFixed(3)}A</span>
           </div>
-          <div className="stat-item">
-            <span className="stat-key">KVL mismatch</span>
-            <span className="stat-value">{kvlError.toExponential(2)}V</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-text-tertiary">KVL mismatch</span>
+            <span className="text-[11px] font-semibold text-text-primary font-mono">{kvlError.toExponential(2)}V</span>
           </div>
         </div>
       </div>
 
-      <div className="sidebar-right">
-        <div className="section-label">Impedance & Power</div>
-        <div className="metrics-grid">
+      <div className="bg-primary border-l border-border-primary py-3.5 px-3 overflow-y-auto flex flex-col gap-3">
+        <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Impedance & Power</div>
+        <div className="grid grid-cols-2 gap-2">
           <MetricCard label="Z (Total)" value={metrics.impedance.toFixed(2)} unit="Ω" />
           <MetricCard label="XL" value={metrics.inductiveReactance.toFixed(2)} unit="Ω" />
           <MetricCard label="XC" value={metrics.capacitiveReactance.toFixed(2)} unit="Ω" />
@@ -274,9 +274,9 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
 
         {isAdvanced && (
           <>
-            <div className="divider" style={{ margin: '12px 0' }} />
-            <div className="section-label">Power Decomposition</div>
-            <div className="metrics-grid">
+            <div className="h-px bg-border-primary my-3" />
+            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Power Decomposition</div>
+            <div className="grid grid-cols-2 gap-2">
               <MetricCard label="P" value={metrics.realPower.toFixed(2)} unit="W" />
               <MetricCard label="Q" value={metrics.reactivePower.toFixed(2)} unit="VAR" />
               <MetricCard label="S" value={metrics.apparentPower.toFixed(2)} unit="VA" />
@@ -285,10 +285,10 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           </>
         )}
 
-        <div className="divider" />
+        <div className="h-px bg-border-primary" />
 
-        <div className="section-group">
-          <div className="section-label">Frequency Domain (C++ Sweep)</div>
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Frequency Domain (C++ Sweep)</div>
           {freqError && (
             <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 8 }}>
               Sweep error: {freqError}
@@ -297,7 +297,7 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           {freqLoading ? (
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Initializing frequency engine...</div>
           ) : (
-            <div className="metrics-grid">
+            <div className="grid grid-cols-2 gap-2">
               <MetricCard label="f0" value={freqAnalysis.resonantFrequency.toFixed(2)} unit="Hz" />
               <MetricCard label="BW" value={freqAnalysis.bandwidth.toFixed(2)} unit="Hz" />
               <MetricCard label="Q" value={freqAnalysis.qualityFactor.toFixed(3)} />
@@ -306,26 +306,19 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           )}
         </div>
 
-        <div className="divider" />
+        <div className="h-px bg-border-primary" />
 
-        <div className="section-group">
-          <div className="section-label">Resonance Control</div>
+        <div className="mb-5">
+          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Resonance Control</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <button
-              className={`tune-btn ${isResonant ? 'resonant' : ''}`}
-              style={{ flex: 1, marginTop: 0 }}
+              className={`px-3 py-1.5 rounded border text-[11px] font-semibold transition-all flex-1 ${isResonant ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-secondary border-border-primary text-text-secondary hover:bg-elevated'}`}
               onClick={tuneToResonance}
             >
               {isResonant ? 'Resonant' : 'Instant Tune'}
             </button>
             <button
-              className={`tune-btn ${isAutoTuneLocked ? 'active' : ''}`}
-              style={{
-                flex: 1,
-                marginTop: 0,
-                background: isAutoTuneLocked ? 'var(--blue-500)' : 'transparent',
-                color: isAutoTuneLocked ? '#fff' : 'var(--blue-400)',
-              }}
+              className={`px-3 py-1.5 rounded border text-[11px] font-semibold transition-all flex-1 ${isAutoTuneLocked ? 'bg-blue-500 border-blue-500 text-white' : 'bg-transparent border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}
               onClick={() => setIsAutoTuneLocked((prev) => !prev)}
             >
               {isAutoTuneLocked ? 'Lock On' : 'Lock Off'}
@@ -336,10 +329,10 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           </div>
         </div>
 
-        <div className="divider" />
+        <div className="h-px bg-border-primary" />
 
-        <div className="section-label">Phasor Snapshot (t=0)</div>
-        <div className="phasor-dashboard">
+        <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Phasor Snapshot (t=0)</div>
+        <div className="bg-black rounded-lg border border-white/10 p-2 overflow-hidden">
           <PhasorCanvas
             vs={{
               real: phasorReference?.vs_real ?? amplitude,

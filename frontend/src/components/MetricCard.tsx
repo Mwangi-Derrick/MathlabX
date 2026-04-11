@@ -13,10 +13,10 @@ interface MetricCardProps {
 
 export const MetricCard: React.FC<MetricCardProps> = ({ label, value, unit }) => {
   return (
-    <div style={{backgroundColor: "#edf1f5" }} className="metric-card">
-      <div className="metric-label">{label}</div>
-      <div className="metric-value">{value}</div>
-      {unit && <div className="metric-label">{unit}</div>}
+    <div className="bg-secondary rounded-md px-3 py-2.5 transition-colors hover:bg-elevated">
+      <div className="text-[10px] text-text-tertiary mb-[3px] uppercase tracking-[0.06em]">{label}</div>
+      <div className="text-[18px] font-medium text-text-primary font-mono leading-[1.2]">{value}</div>
+      {unit && <div className="text-[10px] text-text-secondary mt-[2px]">{unit}</div>}
     </div>
   )
 }

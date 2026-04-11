@@ -114,13 +114,13 @@ export const PhasorCanvas: React.FC<PhasorCanvasProps> = ({ vs, vr, vl, vc, maxV
   }, [vs, vr, vl, vc, maxVal, time, freq])
 
   return (
-    <div className="phasor-wrap" style={{ textAlign: 'center' }}>
-      <canvas ref={canvasRef} style={{ borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
-      <div className="phasor-legend" style={{ marginTop: '10px', display: 'flex', gap: '15px', justifyContent: 'center' }}>
-        <span style={{ color: '#ffffff' }}>Vs (Source)</span>
-        <span style={{ color: '#2563eb' }}>VR (Resistive)</span>
-        <span style={{ color: '#eab308' }}>VL (Inductive)</span>
-        <span style={{ color: '#16a34a' }}>VC (Capacitive)</span>
+    <div className="bg-[#020617] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-in-out hover:-translate-y-0.5 hover:border-blue-500 rounded-xl relative overflow-hidden inline-block text-center w-full max-w-[450px]">
+      <canvas ref={canvasRef} style={{ borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', width: '100%' }} />
+      <div className="mt-2 flex gap-4 justify-center text-[10px] font-mono tracking-wider mb-2">
+        <span className="text-white">Vs (Source)</span>
+        <span className="text-blue-600">VR (Resistive)</span>
+        <span className="text-yellow-500">VL (Inductive)</span>
+        <span className="text-emerald-500">VC (Capacitive)</span>
       </div>
     </div>
   )

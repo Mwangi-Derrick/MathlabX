@@ -67,55 +67,65 @@ export const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className={`app-shell ui-${uiMode}`}>
-        <div className="topbar">
-          <div className="logo">
-            <div className="logo-mark">
-              <svg viewBox="0 0 14 14" fill="none">
+      <div className={`h-screen flex flex-col bg-tertiary ui-${uiMode}`}>
+        <div className="bg-primary border-b border-border-primary px-5 h-12 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-md flex items-center justify-center shadow-glow-blue">
+              <svg viewBox="0 0 14 14" fill="none" className="w-[14px] h-[14px]">
                 <path d="M2 7 Q4 2 7 7 Q10 12 12 7" stroke="white" strokeWidth="1.5" fill="none" />
               </svg>
             </div>
             <div>
-              <div className="logo-title">MathlabX</div>
-              <div className="logo-subtitle">Computational EEE Toolkit - C++ & WASM</div>
+              <div className="text-[13px] font-semibold text-text-primary tracking-[0.01em]">MathlabX</div>
+              <div className="text-[11px] text-text-tertiary">Computational EEE Toolkit - C++ & WASM</div>
             </div>
           </div>
 
-          <div className="module-tabs">
-            {modules.map((mod) => (
-              <button
-                key={mod.id}
-                onClick={() => setActiveModule(mod.id)}
-                className={`module-tab ${activeModule === mod.id ? 'active' : ''}`}
-              >
-                {mod.label}
-              </button>
-            ))}
+          <div className="flex gap-1">
+            {modules.map((mod) => {
+              const isActive = activeModule === mod.id;
+              return (
+                <button
+                  key={mod.id}
+                  onClick={() => setActiveModule(mod.id)}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-medium font-sans cursor-pointer transition-all duration-150 border ${
+                    isActive 
+                      ? 'bg-blue-800 text-white border-blue-700 shadow-glow-blue' 
+                      : 'bg-transparent text-text-secondary border-border-primary hover:bg-secondary'
+                  }`}
+                >
+                  {mod.label}
+                </button>
+              )
+            })}
           </div>
 
-          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="flex items-center gap-[15px]">
             <button 
-              className="ui-toggle"
+              className="px-3 py-1 rounded-full text-[11px] font-semibold cursor-pointer border border-border-primary bg-secondary text-text-secondary hover:bg-elevated hover:border-blue-500 hover:text-[#4f4a4a] transition-all flex items-center gap-1.5"
               onClick={() => setThemeMode(m => m === 'dark' ? 'light' : 'dark')}
-              style={{ padding: '4px 10px' }}
             >
               {themeMode === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>
             <button 
-              className={`ui-toggle ${uiMode}`}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold cursor-pointer border transition-all flex items-center gap-1.5 ${
+                uiMode === 'advanced' 
+                  ? 'bg-blue-500/10 border-blue-500 text-blue-400 hover:bg-elevated hover:border-blue-500 hover:text-[#4f4a4a]'
+                  : 'bg-secondary border-border-primary text-text-secondary hover:bg-elevated hover:border-blue-500 hover:text-[#4f4a4a]'
+              }`}
               onClick={() => setUiMode(m => m === 'basic' ? 'advanced' : 'basic')}
             >
               {uiMode === 'basic' ? '✨ Simple Mode' : '🛠️ Advanced Mode'}
             </button>
             
-            <div className="status-indicator">
-              <div className="status-dot" />
-              <span className="status-text">Wasm Kernel Active</span>
+            <div className="flex items-center gap-2">
+              <div className="w-[7px] h-[7px] rounded-full bg-emerald-500 animate-[pulse_1.5s_infinite]" />
+              <span className="text-[11px] text-text-tertiary">Wasm Kernel Active</span>
             </div>
           </div>
         </div>
 
-        <div className="main-content" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div className="flex flex-1 min-h-0">
           <CurrentComponent uiMode={uiMode} />
         </div>
       </div>
