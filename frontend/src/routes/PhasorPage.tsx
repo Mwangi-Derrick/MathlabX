@@ -46,6 +46,8 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
 
   if (loading) return <div className="loading-screen">Initializing Phasor Engine...</div>
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
   // Determine maxVal for scaling from the phasors
   let maxV = 100
   if (phasors) {
@@ -58,85 +60,145 @@ export const PhasorPage: React.FC<PageProps> = ({ uiMode }) => {
   }
 
   return (
-    <div className="grid grid-cols-[220px_1fr_200px] flex-1 overflow-hidden">
-      <div className="bg-primary border-r border-border-primary py-4 px-3 overflow-y-auto">
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Source</div>
-          <Slider label="Amplitude" value={amplitude} min={10} max={200} step={1} onChange={setAmplitude} />
-          <Slider label="Frequency" value={frequency} min={1} max={100} step={1} onChange={setFrequency} />
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Load (RLC)</div>
-          <Slider label="R (Ω)" value={resistance} min={1} max={200} step={1} onChange={setResistance} />
-          <Slider label="L (H)" value={inductance} min={0.01} max={1} step={0.01} onChange={setInductance} />
-          <Slider label="C (µF)" value={capacitance * 1000000} min={1} max={500} step={1} onChange={(v) => setCapacitance(v / 1000000)} />
-        </div>
-      </div>
-
-      <div className="bg-black flex flex-col overflow-hidden">
-        <div className="flex-1 relative p-4 bg-black flex items-center justify-center">
-          {phasors && (
-            <PhasorCanvas 
-              vs={phasors.vs} 
-              vr={phasors.vr} 
-              vl={phasors.vl} 
-              vc={phasors.vc} 
-              maxVal={maxV} 
-              time={time}
-              freq={frequency}
-            />
-          )}
-        </div>
-        <div className="h-9 border-t border-border-primary flex items-center gap-4 px-4 bg-primary shrink-0">
-          <div className="ml-auto text-[10px] text-text-muted font-mono">C++ Phasor Kernel · {uiMode.toUpperCase()} Active</div>
-        </div>
-      </div>
-
-      <div className="bg-primary border-l border-border-primary py-3.5 px-3 overflow-y-auto flex flex-col gap-3">
-        {uiMode === 'basic' && (
-          <div>
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Summary</div>
-            <MetricCard 
-              label="Load Type" 
-              value={Math.abs(phasors?.phi || 0) < 0.1 ? "Resistive" : (phasors?.phi || 0) > 0 ? "Inductive" : "Capacitive"} 
-              unit="" 
-            />
-          </div>
+    <div className="flex flex-1 relative overflow-hidden bg-black w-full h-full">
+      {/* Main Canvas Area (Full width) */}
+      <div className="flex-1 relative bg-black flex items-center justify-center z-0">
+        {phasors && (
+          <PhasorCanvas 
+            vs={phasors.vs} 
+            vr={phasors.vr} 
+            vl={phasors.vl} 
+            vc={phasors.vc} 
+            maxVal={maxV} 
+            time={time}
+            freq={frequency}
+          />
         )}
+        
+        {/* Subtle Bottom Status Bar Overlay */}
+        <div className="absolute bottom-0 left-0 w-full h-8 flex items-center px-6 pointer-events-none z-10 bg-gradient-to-t from-black/80 to-transparent">
+          <div className="text-[10px] text-emerald-500/50 font-mono tracking-widest uppercase">C++ Phasor Kernel Active · {frequency}Hz</div>
+        </div>
+      </div>
 
-        {uiMode === 'advanced' && (
-          <div>
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Vector Analysis</div>
-            <div className="mb-3">
-              <button 
-                className={`w-full flex justify-center items-center py-2 px-3 text-[11px] font-bold tracking-wide uppercase transition-colors rounded ${isAnimated ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50' : 'bg-[#1e293b] text-text-secondary hover:text-white border border-transparent'}`}
-                onClick={() => setIsAnimated(!isAnimated)}
-              >
-                {isAnimated ? '⏸️ Stop Rotation' : '▶️ Animate Rotation'}
-              </button>
+      {/* Right Sidebar - Docked, Collapsible */}
+      <div 
+        className={`h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
+          isSidebarOpen ? 'w-[320px] md:w-[380px]' : 'w-12'
+        }`}
+      >
+        {/* Toggle Header / Tab */}
+        <div className="h-12 border-b border-border-primary flex items-center shrink-0">
+          <button 
+            className="w-12 h-full flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Properties" : "Expand Properties"}
+          >
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
+              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+            </svg>
+          </button>
+          
+          <div className={`overflow-hidden transition-opacity duration-300 whitespace-nowrap ${isSidebarOpen ? 'opacity-100 flex-1 px-2' : 'opacity-0 w-0'}`}>
+            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-text-tertiary">Properties</span>
+          </div>
+        </div>
+
+        {/* Panel Content */}
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'} transition-opacity duration-300 delay-100`}>
+          <div className="p-5 flex flex-col gap-6">
+            
+            {/* Source Module */}
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_theme(colors.blue.500)]"></span> Source Signal
+              </div>
+              <div className="flex flex-col gap-4">
+                <Slider label="Amplitude" value={amplitude} min={10} max={200} step={1} onChange={setAmplitude} />
+                <Slider label="Frequency" value={frequency} min={1} max={100} step={1} onChange={setFrequency} />
+              </div>
             </div>
-            {phasors && (
+
+            {/* Load Module */}
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_theme(colors.indigo.500)]"></span> Load Element (RLC)
+              </div>
+              <div className="flex flex-col gap-4">
+                <Slider label="R (Ω)" value={resistance} min={1} max={200} step={1} onChange={setResistance} />
+                <Slider label="L (H)" value={inductance} min={0.01} max={1} step={0.01} onChange={setInductance} />
+                <Slider label="C (µF)" value={capacitance * 1000000} min={1} max={500} step={1} onChange={(v) => setCapacitance(v / 1000000)} />
+              </div>
+            </div>
+
+            {uiMode === 'basic' && (
+              <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Summary
+                </div>
+                <MetricCard 
+                  label="Load Type" 
+                  value={Math.abs(phasors?.phi || 0) < 0.1 ? "Resistive" : (phasors?.phi || 0) > 0 ? "Inductive" : "Capacitive"} 
+                  unit="" 
+                />
+              </div>
+            )}
+
+            {uiMode === 'advanced' && (
               <>
-                <MetricCard label="Phase Angle φ" value={(phasors.phi * 180 / Math.PI).toFixed(1)} unit="°" />
-                <MetricCard label="Z (Impedance)" value={phasors.z.toFixed(1)} unit="Ω" />
-                
-                <div className="h-px bg-border-primary my-3" />
-                <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Polar Forms</div>
-                <div className="bg-blue-600/5 border-l-2 border-blue-600 rounded-r-sm py-1.5 px-2 font-mono text-[10px] text-blue-400 mb-1.5">
-                  VR: {(Math.sqrt(phasors.vr.real**2 + phasors.vr.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vr.imag, phasors.vr.real) * 180/Math.PI).toFixed(0)}°
+                {/* Advanced Vector Controls */}
+                <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                  <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_5px_theme(colors.purple.500)]"></span> Vector Analysis
+                  </div>
+                  
+                  <button 
+                    className={`w-full flex justify-center items-center py-3 px-4 text-[11px] font-bold tracking-wider uppercase transition-all duration-200 rounded-lg mb-5 shadow-sm ${
+                      isAnimated 
+                        ? 'bg-blue-600 border border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]' 
+                        : 'bg-secondary text-text-secondary hover:bg-elevated hover:text-white border border-border-secondary'
+                    }`}
+                    onClick={() => setIsAnimated(!isAnimated)}
+                  >
+                    {isAnimated ? '⏸️ Stop Rotation' : '▶️ Animate Rotation'}
+                  </button>
+                  
+                  {phasors && (
+                    <div className="flex flex-col gap-3">
+                      <MetricCard label="Phase Angle φ" value={(phasors.phi * 180 / Math.PI).toFixed(1)} unit="°" />
+                      <MetricCard label="Z (Impedance)" value={phasors.z.toFixed(1)} unit="Ω" />
+                    </div>
+                  )}
                 </div>
-                <div className="bg-blue-600/5 border-l-2 border-blue-600 rounded-r-sm py-1.5 px-2 font-mono text-[10px] text-yellow-500 mb-1.5">
-                  VL: {(Math.sqrt(phasors.vl.real**2 + phasors.vl.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vl.imag, phasors.vl.real) * 180/Math.PI).toFixed(0)}°
-                </div>
-                <div className="bg-blue-600/5 border-l-2 border-emerald-500 rounded-r-sm py-1.5 px-2 font-mono text-[10px] text-emerald-500">
-                  VC: {(Math.sqrt(phasors.vc.real**2 + phasors.vc.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vc.imag, phasors.vc.real) * 180/Math.PI).toFixed(0)}°
-                </div>
+
+                {/* Polar Form Outputs */}
+                {phasors && (
+                  <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                    <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_theme(colors.cyan.500)]"></span> Polar Forms
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <div className="bg-secondary border border-border-secondary rounded-lg py-2.5 px-3 font-mono text-[12px] text-blue-400 flex justify-between shadow-inner">
+                        <span>VR:</span>
+                        <span>{(Math.sqrt(phasors.vr.real**2 + phasors.vr.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vr.imag, phasors.vr.real) * 180/Math.PI).toFixed(0)}°</span>
+                      </div>
+                      <div className="bg-secondary border border-border-secondary rounded-lg py-2.5 px-3 font-mono text-[12px] text-yellow-500 flex justify-between shadow-inner">
+                        <span>VL:</span>
+                        <span>{(Math.sqrt(phasors.vl.real**2 + phasors.vl.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vl.imag, phasors.vl.real) * 180/Math.PI).toFixed(0)}°</span>
+                      </div>
+                      <div className="bg-secondary border border-border-secondary rounded-lg py-2.5 px-3 font-mono text-[12px] text-emerald-500 flex justify-between shadow-inner">
+                        <span>VC:</span>
+                        <span>{(Math.sqrt(phasors.vc.real**2 + phasors.vc.imag**2)).toFixed(1)}V ∠ {(Math.atan2(phasors.vc.imag, phasors.vc.real) * 180/Math.PI).toFixed(0)}°</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
+

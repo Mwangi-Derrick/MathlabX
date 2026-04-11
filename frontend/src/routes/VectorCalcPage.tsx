@@ -29,55 +29,15 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
     }
   }, [opType, preset, ax, ay, resX, resY, loading, compute])
 
-  if (loading) return <div>Initializing Vector Calc Engine...</div>
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  if (loading) return <div className="loading-screen">Initializing Vector Calc Engine...</div>
 
   return (
-    <div className="grid grid-cols-[220px_1fr_200px] flex-1 overflow-hidden">
-      <div className="bg-primary border-r border-border-primary py-4 px-3 overflow-y-auto">
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Operator</div>
-          <div className="grid grid-cols-1 gap-[5px] mb-3">
-            <ToggleButton label="Divergence (∇·F)" isActive={opType === 'div'} onClick={() => setOpType('div')} />
-            <ToggleButton label="Curl (∇×F)" isActive={opType === 'curl'} onClick={() => setOpType('curl')} />
-            <ToggleButton label="Gradient (∇V)" isActive={opType === 'grad'} onClick={() => setOpType('grad')} />
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Field Preset</div>
-          <select value={preset} onChange={(e) => setPreset(e.target.value)} className="w-full p-2 bg-[#1e293b] text-white border border-white/10 rounded">
-            <option value="source">Radial (Source)</option>
-            <option value="rotation">Swirl (Rotation)</option>
-            <option value="sink">Sink Field</option>
-            <option value="saddle">Saddle Field</option>
-            <option value="custom">Custom Params</option>
-          </select>
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Parameters</div>
-          <Slider label="Scale X" value={ax} min={-2} max={2} step={0.1} onChange={setAx} />
-          <Slider label="Scale Y" value={ay} min={-2} max={2} step={0.1} onChange={setAy} />
-          <Slider label="Resolution X" value={resX} min={5} max={50} step={1} onChange={setResX} />
-          <Slider label="Resolution Y" value={resY} min={5} max={50} step={1} onChange={setResY} />
-          
-          <div className="mt-4 flex flex-row items-center justify-between px-1">
-            <span className="text-[11px] font-semibold text-text-secondary">Streamlines Tracer:</span>
-            <button 
-              onClick={() => {
-                if (streamlines.length > 0) clearStreamlines()
-                else computeStreamlines(preset, ax, ay)
-              }}
-              className={`px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded transition-colors ${streamlines.length > 0 ? 'bg-blue-600 text-white border border-blue-500' : 'bg-[#1e293b] text-text-tertiary hover:text-white border border-transparent hover:border-white/20'}`}
-            >
-              {streamlines.length > 0 ? 'Clear Traces' : 'Trace Grid'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-black flex flex-col overflow-hidden">
-        <div className="flex-1 relative p-4 min-h-0 bg-black">
+    <div className="flex flex-1 relative overflow-hidden bg-black w-full h-full">
+      {/* Center Canvas Area (Full width) */}
+      <div className="flex-1 relative bg-black flex flex-col overflow-hidden z-0">
+        <div className="flex-1 relative p-1 lg:p-4 bg-black flex items-center justify-center min-h-0">
           <VectorFieldCanvas2D 
             grid={grid} 
             type={opType} 
@@ -85,65 +45,146 @@ export const VectorCalcPage: React.FC<PageProps> = ({ uiMode }) => {
             onSelection={opType === 'curl' ? (bounds) => verifyTheorem(bounds.x0, bounds.y0, bounds.x1, bounds.y1, preset, ax, ay) : undefined}
           />
         </div>
-        <div className="h-9 border-t border-border-primary flex items-center gap-4 px-4 bg-primary shrink-0">
-          <div className="ml-auto text-[10px] text-text-muted font-mono">2D Spatial Kernel Active</div>
+        
+        {/* Bottom Status overlay */}
+        <div className="absolute bottom-0 left-0 w-full h-12 flex items-center px-6 pointer-events-none z-10 bg-gradient-to-t from-black/90 to-transparent pb-2">
+          <div className="ml-auto text-[10px] text-text-muted font-mono uppercase tracking-wider">2D Spatial Kernel Active</div>
         </div>
       </div>
 
-      <div className="bg-primary border-l border-border-primary py-3.5 px-3 overflow-y-auto flex flex-col gap-3">
-        {uiMode === 'basic' && (
-          <div>
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Field Status</div>
-            <MetricCard label="Complexity" value="Calculated" unit="" />
+      {/* Right Sidebar - Docked, Collapsible */}
+      <div 
+        className={`h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
+          isSidebarOpen ? 'w-[320px] md:w-[380px]' : 'w-12'
+        }`}
+      >
+        <div className="h-12 border-b border-border-primary flex items-center shrink-0">
+          <button 
+            className="w-12 h-full flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Properties" : "Expand Properties"}
+          >
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
+              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+            </svg>
+          </button>
+          
+          <div className={`overflow-hidden transition-opacity duration-300 whitespace-nowrap ${isSidebarOpen ? 'opacity-100 flex-1 px-2' : 'opacity-0 w-0'}`}>
+            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-text-tertiary">Inspector</span>
           </div>
-        )}
+        </div>
 
-        {uiMode === 'advanced' && (
-          <div>
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Calculus Reference</div>
-            <div className="bg-blue-600/5 border-l-2 border-blue-600 rounded-r-sm py-1.5 px-2.5 font-mono text-[11px] text-blue-400 mb-1.5">
-              {opType === 'div' && '∇·F = ∂Fx/∂x + ∂Fy/∂y'}
-              {opType === 'curl' && '(∇×F)z = ∂Fy/∂x - ∂Fx/∂y'}
-              {opType === 'grad' && '∇V = (∂V/∂x)i + (∂V/∂y)j'}
-            </div>
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'} transition-opacity duration-300 delay-100`}>
+          <div className="p-5 flex flex-col gap-6">
             
-            <div className="h-px bg-border-primary my-3" />
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Insight</div>
-            <p className="text-[11px] leading-[1.4] text-text-secondary">
-              {opType === 'div' && 'Red arrows indicate Source (+div), Green indicate Sink (-div).'}
-              {opType === 'curl' && 'Orange indicates CW rotation, Purple indicates CCW rotation.'}
-              {opType === 'grad' && 'Vectors point in direction of steepest increase.'}
-            </p>
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_theme(colors.blue.500)]"></span> Operator
+              </div>
+              <div className="flex flex-col gap-2">
+                <ToggleButton label="Divergence (∇·F)" isActive={opType === 'div'} onClick={() => setOpType('div')} />
+                <ToggleButton label="Curl (∇×F)" isActive={opType === 'curl'} onClick={() => setOpType('curl')} />
+                <ToggleButton label="Gradient (∇V)" isActive={opType === 'grad'} onClick={() => setOpType('grad')} />
+              </div>
+            </div>
 
-            {opType === 'curl' && (
-              <>
-                <div className="h-px bg-border-primary my-3" />
-                <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Green's Theorem Test</div>
-                <p className="text-[11px] leading-[1.4] text-text-secondary px-1 mb-2">
-                  Click and drag a box on the canvas field to evaluate the line integral along its boundary vs the area integral.
-                </p>
-                {theoremResult && (
-                  <div className="bg-[#020617] border border-white/5 p-3 rounded-md space-y-1.5 shadow-inner">
-                    <div className="text-[11px] text-text-secondary flex justify-between tracking-wide">
-                      <span>∮ F·dr:</span> 
-                      <span className="font-mono text-blue-400">{theoremResult.lineIntegral.toFixed(4)}</span>
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_theme(colors.indigo.500)]"></span> Field Preset
+              </div>
+              <select value={preset} onChange={(e) => setPreset(e.target.value)} className="w-full p-2.5 text-[12px] bg-secondary focus:bg-elevated focus:ring-1 focus:ring-blue-500 text-text-primary border border-border-secondary rounded-lg outline-none transition-all shadow-inner font-medium">
+                <option value="source">Radial (Source)</option>
+                <option value="rotation">Swirl (Rotation)</option>
+                <option value="sink">Sink Field</option>
+                <option value="saddle">Saddle Field</option>
+                <option value="custom">Custom Params</option>
+              </select>
+            </div>
+
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_theme(colors.emerald.500)]"></span> Parameters
+              </div>
+              <div className="flex flex-col gap-4">
+                <Slider label="Scale X" value={ax} min={-2} max={2} step={0.1} onChange={setAx} />
+                <Slider label="Scale Y" value={ay} min={-2} max={2} step={0.1} onChange={setAy} />
+                <Slider label="Resolution X" value={resX} min={5} max={50} step={1} onChange={setResX} />
+                <Slider label="Resolution Y" value={resY} min={5} max={50} step={1} onChange={setResY} />
+              </div>
+              
+              <div className="mt-6 pt-5 border-t border-border-secondary flex flex-row items-center justify-between">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">Stream Traces:</span>
+                <button 
+                  onClick={() => {
+                    if (streamlines.length > 0) clearStreamlines()
+                    else computeStreamlines(preset, ax, ay)
+                  }}
+                  className={`px-4 py-2 text-[10px] uppercase tracking-wider font-bold rounded-lg transition-all shadow-sm ${streamlines.length > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500 hover:bg-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-blue-600/20 text-blue-400 hover:text-white border border-blue-500 hover:bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]'}`}
+                >
+                  {streamlines.length > 0 ? 'Clear Traces' : 'Trace Grid'}
+                </button>
+              </div>
+            </div>
+
+            {uiMode === 'basic' && (
+              <div className="flex flex-col gap-4 px-2">
+                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Field Status
+                </div>
+                <MetricCard label="Complexity" value="Calculated" unit="" />
+              </div>
+            )}
+
+            {uiMode === 'advanced' && (
+              <div className="flex flex-col gap-6">
+                <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                  <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_5px_theme(colors.purple.500)]"></span> Reference
+                  </div>
+                  <div className="bg-black/50 rounded-lg py-3 px-3 font-mono text-[12px] text-blue-400 mb-4 border border-border-secondary shadow-inner">
+                    {opType === 'div' && '∇·F = ∂Fx/∂x + ∂Fy/∂y'}
+                    {opType === 'curl' && '(∇×F)z = ∂Fy/∂x - ∂Fx/∂y'}
+                    {opType === 'grad' && '∇V = (∂V/∂x)i + (∂V/∂y)j'}
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-text-muted">
+                    {opType === 'div' && 'Red arrows indicate Source (+div), Green indicate Sink (-div).'}
+                    {opType === 'curl' && 'Orange indicates CW rotation, Purple indicates CCW rotation.'}
+                    {opType === 'grad' && 'Vectors point in direction of steepest increase.'}
+                  </p>
+                </div>
+
+                {opType === 'curl' && (
+                  <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                    <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_5px_theme(colors.amber.500)]"></span> Green's Theorem
                     </div>
-                    <div className="text-[11px] text-text-secondary flex justify-between tracking-wide">
-                      <span>∬ (∇×F)z dA:</span> 
-                      <span className="font-mono text-purple-400">{theoremResult.areaIntegral.toFixed(4)}</span>
-                    </div>
-                    <div className="text-[10px] mt-2 pt-1.5 border-t border-white/5 text-right font-medium flex justify-between">
-                      <span className="text-text-tertiary">Equality</span>
-                      <span className={theoremResult.matches ? 'text-emerald-500' : 'text-red-500'}>
-                        {theoremResult.matches ? '✓ VERIFIED' : '✗ MISMATCH'}
-                      </span>
-                    </div>
+                    <p className="text-[11px] leading-relaxed text-text-muted mb-4">
+                      Click and drag a box on the canvas field to evaluate the line integral along its boundary vs the area integral.
+                    </p>
+                    {theoremResult && (
+                      <div className="bg-secondary border border-border-secondary p-4 rounded-lg space-y-3 shadow-inner">
+                        <div className="text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
+                          <span className="font-semibold">∮ F·dr:</span> 
+                          <span className="font-mono text-[13px] text-blue-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.lineIntegral.toFixed(4)}</span>
+                        </div>
+                        <div className="text-[11px] text-text-secondary flex justify-between tracking-wide items-center">
+                          <span className="font-semibold">∬ (∇×F)z dA:</span> 
+                          <span className="font-mono text-[13px] text-purple-400 font-bold bg-black/40 px-2 py-1 rounded">{theoremResult.areaIntegral.toFixed(4)}</span>
+                        </div>
+                        <div className="text-[11px] mt-3 pt-3 border-t border-border-secondary text-right font-bold flex justify-between tracking-wider items-center">
+                          <span className="text-text-tertiary uppercase">Result</span>
+                          <span className={`${theoremResult.matches ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10'} px-2.5 py-1 rounded-md uppercase text-[10px]`}>
+                            {theoremResult.matches ? '✓ Verified' : '✗ Mismatch'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

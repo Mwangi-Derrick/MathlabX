@@ -132,102 +132,28 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
     return Math.max(amplitude * 1.1, ...mags) * 1.1
   }, [amplitude, phasorReference])
 
-  if (loading) return <div>Loading AC circuit kernel...</div>
-  if (error) return <div>Error: {error}</div>
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  if (loading) return <div className="loading-screen">Loading AC circuit kernel...</div>
+  if (error) return <div className="error-screen">Error: {error}</div>
 
   return (
-    <div className="grid grid-cols-[220px_1fr_200px] flex-1 overflow-hidden">
-      <div className="bg-primary border-r border-border-primary py-4 px-3 overflow-y-auto">
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Source</div>
-          <Slider
-            label="Voltage Vm"
-            value={amplitude}
-            min={10}
-            max={MAX_AMPLITUDE}
-            step={1}
-            onChange={setAmplitude}
-            formatValue={(v) => `${v}V`}
-          />
-          <Slider
-            label="Frequency f"
-            value={frequency}
-            min={5}
-            max={400}
-            step={1}
-            onChange={setFrequency}
-            formatValue={(v) => `${v}Hz`}
-          />
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Load (RLC)</div>
-          <Slider
-            label="Resistance R"
-            value={resistance}
-            min={1}
-            max={200}
-            step={1}
-            onChange={setResistance}
-            formatValue={(v) => `${v}Ω`}
-          />
-          <Slider
-            label="Inductance L"
-            value={inductance}
-            min={0.001}
-            max={1.0}
-            step={0.001}
-            onChange={setInductance}
-            formatValue={(v) => `${v.toFixed(3)}H`}
-          />
-          <Slider
-            label="Capacitance C"
-            value={capacitance * 1_000_000}
-            min={1}
-            max={500}
-            step={1}
-            onChange={(v) => setCapacitance(v / 1_000_000)}
-            formatValue={(v) => `${v.toFixed(0)}µF`}
-          />
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Simulation</div>
-          <Slider
-            label="Sim Speed"
-            value={simSpeed}
-            min={0.01}
-            max={3}
-            step={0.01}
-            onChange={setSimSpeed}
-            formatValue={(v) => `${v.toFixed(2)}x`}
-          />
-          <Slider
-            label="Samples"
-            value={samples}
-            min={200}
-            max={2400}
-            step={50}
-            onChange={setSamples}
-            formatValue={(v) => `${v}`}
-          />
-        </div>
-      </div>
-
-      <div className="bg-black flex flex-col overflow-hidden relative">
-        <div className="flex justify-between items-center px-4 py-3 absolute top-0 w-full z-10 pointer-events-none">
-          <div className="flex gap-1 bg-primary/80 backdrop-blur-md rounded border border-border-primary p-1 pointer-events-auto">
-            <button className={`px-3 py-1 rounded text-[11px] font-semibold transition-all ${viewMode === '3d' ? 'bg-blue-600 text-white' : 'text-text-secondary hover:bg-secondary'}`} onClick={() => setViewMode('3d')}>
+    <div className="flex flex-1 relative overflow-hidden bg-black w-full h-full">
+      {/* Center Canvas Area (Full width) */}
+      <div className="flex-1 relative bg-black flex flex-col overflow-hidden z-0">
+        <div className="absolute top-4 left-4 z-10 pointer-events-none flex justify-between w-[calc(100%-2rem)]">
+          <div className="flex gap-1.5 bg-surface/80 backdrop-blur-md rounded-lg border border-border-secondary p-1.5 shadow-lg pointer-events-auto">
+            <button className={`px-4 py-1.5 rounded-md text-[11px] font-semibold tracking-wide transition-all ${viewMode === '3d' ? 'bg-blue-600 text-white shadow-sm' : 'text-text-secondary hover:bg-elevated'}`} onClick={() => setViewMode('3d')}>
               4D Phasor-Time
             </button>
-            <button className={`px-3 py-1 rounded text-[11px] font-semibold transition-all ${viewMode === '2d' ? 'bg-blue-600 text-white' : 'text-text-secondary hover:bg-secondary'}`} onClick={() => setViewMode('2d')}>
+            <button className={`px-4 py-1.5 rounded-md text-[11px] font-semibold tracking-wide transition-all ${viewMode === '2d' ? 'bg-blue-600 text-white shadow-sm' : 'text-text-secondary hover:bg-elevated'}`} onClick={() => setViewMode('2d')}>
               Oscilloscope
             </button>
           </div>
-          {isResonant && <div className="px-2 py-1 rounded bg-orange-500/20 text-orange-400 text-[10px] uppercase font-bold border border-orange-500/50">RESONANCE LOCK</div>}
+          {isResonant && <div className="px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 text-[10px] uppercase font-bold border border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]">RESONANCE LOCK</div>}
         </div>
 
-        <div className="flex-1 relative p-4 min-h-0 bg-black pt-12">
+        <div className="flex-1 relative min-h-0 bg-black">
           {viewMode === '3d' ? (
             <WaveCanvas3D phasorState={phasorState} simTime={time} analysis={freqAnalysis} />
           ) : (
@@ -245,115 +171,165 @@ export const ACSignalsPage: React.FC<PageProps> = ({ uiMode }) => {
           )}
         </div>
 
-        <div className="h-9 border-t border-border-primary flex items-center gap-4 px-4 bg-primary shrink-0">
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#22d3ee]" />
-            <span className="text-[11px] text-text-tertiary">V(t) peak</span>
-            <span className="text-[11px] font-semibold text-text-primary font-mono">{amplitude.toFixed(1)}V</span>
+        {/* Bottom Status overlay */}
+        <div className="absolute bottom-0 left-0 w-full h-12 flex items-center justify-between px-6 pointer-events-none z-10 bg-gradient-to-t from-black/90 to-transparent pb-2">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#22d3ee] shadow-[0_0_8px_theme(colors.cyan.400)]" />
+              <span className="text-[11px] text-text-tertiary uppercase tracking-wider">V(t) peak</span>
+              <span className="text-[12px] font-bold text-text-primary font-mono">{amplitude.toFixed(1)}V</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#fbbf24] shadow-[0_0_8px_theme(colors.amber.400)]" />
+              <span className="text-[11px] text-text-tertiary uppercase tracking-wider">I(t) peak</span>
+              <span className="text-[12px] font-bold text-text-primary font-mono">{metrics.currentAmplitude.toFixed(3)}A</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#fbbf24]" />
-            <span className="text-[11px] text-text-tertiary">I(t) peak</span>
-            <span className="text-[11px] font-semibold text-text-primary font-mono">{metrics.currentAmplitude.toFixed(3)}A</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-text-tertiary">KVL mismatch</span>
-            <span className="text-[11px] font-semibold text-text-primary font-mono">{kvlError.toExponential(2)}V</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-text-tertiary uppercase tracking-wider">KVL mismatch</span>
+            <span className="text-[12px] font-bold text-text-primary font-mono">{kvlError.toExponential(2)}V</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-primary border-l border-border-primary py-3.5 px-3 overflow-y-auto flex flex-col gap-3">
-        <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Impedance & Power</div>
-        <div className="grid grid-cols-2 gap-2">
-          <MetricCard label="Z (Total)" value={metrics.impedance.toFixed(2)} unit="Ω" />
-          <MetricCard label="XL" value={metrics.inductiveReactance.toFixed(2)} unit="Ω" />
-          <MetricCard label="XC" value={metrics.capacitiveReactance.toFixed(2)} unit="Ω" />
-          <MetricCard label="Power Factor" value={metrics.powerFactor.toFixed(4)} />
-        </div>
-
-        {isAdvanced && (
-          <>
-            <div className="h-px bg-border-primary my-3" />
-            <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Power Decomposition</div>
-            <div className="grid grid-cols-2 gap-2">
-              <MetricCard label="P" value={metrics.realPower.toFixed(2)} unit="W" />
-              <MetricCard label="Q" value={metrics.reactivePower.toFixed(2)} unit="VAR" />
-              <MetricCard label="S" value={metrics.apparentPower.toFixed(2)} unit="VA" />
-              <MetricCard label="φ" value={((metrics.phaseAngle * 180) / Math.PI).toFixed(2)} unit="°" />
-            </div>
-          </>
-        )}
-
-        <div className="h-px bg-border-primary" />
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Frequency Domain (C++ Sweep)</div>
-          {freqError && (
-            <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 8 }}>
-              Sweep error: {freqError}
-            </div>
-          )}
-          {freqLoading ? (
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Initializing frequency engine...</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <MetricCard label="f0" value={freqAnalysis.resonantFrequency.toFixed(2)} unit="Hz" />
-              <MetricCard label="BW" value={freqAnalysis.bandwidth.toFixed(2)} unit="Hz" />
-              <MetricCard label="Q" value={freqAnalysis.qualityFactor.toFixed(3)} />
-              <MetricCard label="Peak |H|" value={freqAnalysis.peakGainDb.toFixed(2)} unit="dB" />
-            </div>
-          )}
-        </div>
-
-        <div className="h-px bg-border-primary" />
-
-        <div className="mb-5">
-          <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Resonance Control</div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <button
-              className={`px-3 py-1.5 rounded border text-[11px] font-semibold transition-all flex-1 ${isResonant ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-secondary border-border-primary text-text-secondary hover:bg-elevated'}`}
-              onClick={tuneToResonance}
-            >
-              {isResonant ? 'Resonant' : 'Instant Tune'}
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded border text-[11px] font-semibold transition-all flex-1 ${isAutoTuneLocked ? 'bg-blue-500 border-blue-500 text-white' : 'bg-transparent border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}
-              onClick={() => setIsAutoTuneLocked((prev) => !prev)}
-            >
-              {isAutoTuneLocked ? 'Lock On' : 'Lock Off'}
-            </button>
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-            |XL − XC| = {resonanceGap.toFixed(4)} Ω
+      {/* Right Sidebar - Docked, Collapsible */}
+      <div 
+        className={`h-full bg-surface/95 backdrop-blur-2xl border-l border-border-primary shadow-[-10px_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out shrink-0 z-20 flex flex-col ${
+          isSidebarOpen ? 'w-[320px] md:w-[380px]' : 'w-12'
+        }`}
+      >
+        <div className="h-12 border-b border-border-primary flex items-center shrink-0">
+          <button 
+            className="w-12 h-full flex items-center justify-center hover:bg-elevated text-text-muted hover:text-text-primary transition-colors shrink-0 outline-none"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Properties" : "Expand Properties"}
+          >
+            <svg viewBox="0 0 24 24" className={`w-5 h-5 fill-current transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
+              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+            </svg>
+          </button>
+          
+          <div className={`overflow-hidden transition-opacity duration-300 whitespace-nowrap ${isSidebarOpen ? 'opacity-100 flex-1 px-2' : 'opacity-0 w-0'}`}>
+            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-text-tertiary">Inspector</span>
           </div>
         </div>
 
-        <div className="h-px bg-border-primary" />
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'} transition-opacity duration-300 delay-100`}>
+          <div className="p-5 flex flex-col gap-6">
+            
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_theme(colors.blue.500)]"></span> Source
+              </div>
+              <Slider label="Voltage Vm" value={amplitude} min={10} max={MAX_AMPLITUDE} step={1} onChange={setAmplitude} formatValue={(v) => `${v}V`} />
+              <Slider label="Frequency f" value={frequency} min={5} max={400} step={1} onChange={setFrequency} formatValue={(v) => `${v}Hz`} />
+            </div>
 
-        <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.08em] mb-2 px-1">Phasor Snapshot (t=0)</div>
-        <div className="bg-black rounded-lg border border-white/10 p-2 overflow-hidden">
-          <PhasorCanvas
-            vs={{
-              real: phasorReference?.vs_real ?? amplitude,
-              imag: phasorReference?.vs_imag ?? 0,
-            }}
-            vr={{
-              real: phasorReference?.vr_real ?? (metrics.currentAmplitude * resistance),
-              imag: phasorReference?.vr_imag ?? 0,
-            }}
-            vl={{
-              real: phasorReference?.vl_real ?? 0,
-              imag: phasorReference?.vl_imag ?? (metrics.currentAmplitude * metrics.inductiveReactance),
-            }}
-            vc={{
-              real: phasorReference?.vc_real ?? 0,
-              imag: phasorReference?.vc_imag ?? (-metrics.currentAmplitude * metrics.capacitiveReactance),
-            }}
-            maxVal={phasorCanvasMax}
-            time={time}
-            freq={frequency}
-          />
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_5px_theme(colors.indigo.500)]"></span> RLC Load
+              </div>
+              <Slider label="Resistance R" value={resistance} min={1} max={200} step={1} onChange={setResistance} formatValue={(v) => `${v}Ω`} />
+              <Slider label="Inductance L" value={inductance} min={0.001} max={1.0} step={0.001} onChange={setInductance} formatValue={(v) => `${v.toFixed(3)}H`} />
+              <div className="mb-4">
+                <Slider label="Capacitance C" value={capacitance * 1_000_000} min={1} max={500} step={1} onChange={(v) => setCapacitance(v / 1_000_000)} formatValue={(v) => `${v.toFixed(0)}µF`} />
+              </div>
+
+              <div className="h-px bg-border-secondary/50 my-5" />
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_5px_theme(colors.rose.500)]"></span> Resonance
+              </div>
+              <div className="flex gap-2 mb-3">
+                <button
+                  className={`px-3 py-2 rounded-lg border text-[11px] font-bold tracking-wide uppercase transition-all flex-1 ${isResonant ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-secondary border-border-primary text-text-secondary hover:bg-elevated hover:text-text-primary'}`}
+                  onClick={tuneToResonance}
+                >
+                  {isResonant ? 'Resonant' : 'Instant Tune'}
+                </button>
+                <button
+                  className={`px-3 py-2 rounded-lg border text-[11px] font-bold tracking-wide uppercase transition-all flex-1 ${isAutoTuneLocked ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]' : 'bg-transparent border-blue-500/30 text-blue-400 hover:bg-blue-500/10'}`}
+                  onClick={() => setIsAutoTuneLocked((prev) => !prev)}
+                >
+                  {isAutoTuneLocked ? 'Lock On' : 'Lock Off'}
+                </button>
+              </div>
+              <div className="text-[12px] text-blue-400 text-center font-mono tracking-wide py-2.5 bg-secondary rounded-lg border border-border-secondary shadow-inner">
+                |XL − XC| = {resonanceGap.toFixed(4)} Ω
+              </div>
+            </div>
+
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Impedance Snapshot
+              </div>
+              <div className="grid grid-cols-2 gap-3 pb-2">
+                <MetricCard label="Z (Total)" value={metrics.impedance.toFixed(2)} unit="Ω" />
+                <MetricCard label="XL" value={metrics.inductiveReactance.toFixed(2)} unit="Ω" />
+                <MetricCard label="XC" value={metrics.capacitiveReactance.toFixed(2)} unit="Ω" />
+                <MetricCard label="Power Factor" value={metrics.powerFactor.toFixed(4)} />
+              </div>
+
+              {isAdvanced && (
+                <>
+                  <div className="h-px bg-border-secondary/50 my-4" />
+                  <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Power Decomposition
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <MetricCard label="P" value={metrics.realPower.toFixed(2)} unit="W" />
+                    <MetricCard label="Q" value={metrics.reactivePower.toFixed(2)} unit="VAR" />
+                    <MetricCard label="S" value={metrics.apparentPower.toFixed(2)} unit="VA" />
+                    <MetricCard label="φ" value={((metrics.phaseAngle * 180) / Math.PI).toFixed(2)} unit="°" />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm flex flex-col gap-3">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_theme(colors.cyan.500)]"></span> Live Phasor Snapshot
+              </div>
+              <div className="bg-secondary rounded-xl border border-border-secondary p-2 overflow-hidden shadow-inner h-[240px]">
+                <PhasorCanvas
+                  vs={{ real: phasorReference?.vs_real ?? amplitude, imag: phasorReference?.vs_imag ?? 0 }}
+                  vr={{ real: phasorReference?.vr_real ?? (metrics.currentAmplitude * resistance), imag: phasorReference?.vr_imag ?? 0 }}
+                  vl={{ real: phasorReference?.vl_real ?? 0, imag: phasorReference?.vl_imag ?? (metrics.currentAmplitude * metrics.inductiveReactance) }}
+                  vc={{ real: phasorReference?.vc_real ?? 0, imag: phasorReference?.vc_imag ?? (-metrics.currentAmplitude * metrics.capacitiveReactance) }}
+                  maxVal={phasorCanvasMax}
+                  time={time}
+                  freq={frequency}
+                />
+              </div>
+            </div>
+
+            {isAdvanced && (
+              <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Frequency Domain
+                </div>
+                {freqError && <div className="text-[11px] text-red-500 mb-2">Sweep error: {freqError}</div>}
+                {freqLoading ? (
+                  <div className="text-[11px] text-text-tertiary">Initializing frequency engine...</div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <MetricCard label="f0" value={freqAnalysis.resonantFrequency.toFixed(2)} unit="Hz" />
+                    <MetricCard label="BW" value={freqAnalysis.bandwidth.toFixed(2)} unit="Hz" />
+                    <MetricCard label="Q" value={freqAnalysis.qualityFactor.toFixed(3)} />
+                    <MetricCard label="Peak |H|" value={freqAnalysis.peakGainDb.toFixed(2)} unit="dB" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="bg-elevated rounded-xl p-5 border border-border-subtle shadow-sm">
+              <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-[0.1em] mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Simulation Engine
+              </div>
+              <Slider label="Sim Speed" value={simSpeed} min={0.01} max={3} step={0.01} onChange={setSimSpeed} formatValue={(v) => `${v.toFixed(2)}x`} />
+              <Slider label="Samples" value={samples} min={200} max={2400} step={50} onChange={setSamples} formatValue={(v) => `${v}`} />
+            </div>
+
+          </div>
         </div>
       </div>
     </div>
