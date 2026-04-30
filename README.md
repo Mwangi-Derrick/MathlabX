@@ -61,7 +61,7 @@ SpatialFieldEngine                 ← Base: resolution, bounds, grid stepping
 
 ### 2. Native CLI & Logging (`cmd/`, `logging/`)
 
-The kernel can also be compiled as a standalone CLI application, ideal for hardware-level verification and structured data logging. This implementation serves as a **JKUAT EEE OOP 2nd Year Mini-Project** submission.
+The kernel can also be compiled as a standalone CLI application, ideal for hardware-level verification and structured data logging.
 
 - **OOP Principles**: Demonstrates deep use of Inheritance, Polymorphism (virtual interfaces), Abstraction (physics formulas), and Encapsulation.
 - **`JsonLogger`**: A dedicated logging utility that captures simulation results (impedance, power, spatial samples) and flushes them to structured JSON files in `logs/`.
