@@ -9,6 +9,7 @@
 *.wasm
 logs
 *.log*
+*.backup*
 
 # Precompiled Headers
 *.gch
