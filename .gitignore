@@ -8,6 +8,7 @@
 *.obj
 *.wasm
 logs
+*.log*
 
 # Precompiled Headers
 *.gch
