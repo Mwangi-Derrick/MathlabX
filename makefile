@@ -250,6 +250,26 @@ fast-cli:
 	$(CLI_CXX) $(CLI_CXXFLAGS) $(CLI_INCLUDES) $(CLI_SRCS) -o $(CLI_TARGET)
 	@echo "$(GREEN)✓ Fast build complete - run with: ./$(CLI_TARGET)$(NC)"
 
+# Maintenance targets
+.PHONY: maintain mantain check-wasm fix-wasm reset-wasm
+
+maintain:
+	@./scripts/emsdk-maintain.sh check
+
+# Common typo alias
+mantain: maintain
+
+check-wasm:
+	@./scripts/emsdk-maintain.sh check
+
+fix-wasm:
+	@./scripts/emsdk-maintain.sh fix
+
+reset-wasm:
+	@./scripts/emsdk-maintain.sh reset
+
+# Override wasm build to run maintenance first
+ 
 # ============================================================================
 # Help
 # ============================================================================
